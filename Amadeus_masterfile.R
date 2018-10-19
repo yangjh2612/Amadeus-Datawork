@@ -284,6 +284,8 @@ fun_read_by_country <- function(filename_list, country_name_list, filename_nuts_
 
         file=paste("panels_J!&", paste(unlist(country_name_list), collapse=""), ".Rda", sep="")  # either panels_ or consolidated_panels
     )
+
+    detach(country_list_c[[1]])
 }
 # main entry point
 
