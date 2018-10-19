@@ -349,9 +349,9 @@ print("All complete")
 ##
 
 
-i <- match(c("United Kingdom"), country_names)
-country_names[[i]]
-fun_read_by_country(filenames[[i]], country_names[[i]], filenames_nuts[[i]])    
+#i <- match(c("United Kingdom"), country_names)
+#country_names[[i]]
+#fun_read_by_country(filenames[[i]], country_names[[i]], filenames_nuts[[i]])    
 ##
 ##
 ##
