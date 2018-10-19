@@ -17,7 +17,7 @@ fun_info_gen <- function(dat_list, var_ind, cut_ind, cut_neg, cut_pov, bin_num, 
   var_list <- lapply(dat_list, function(x) x[,c(2,var_ind)]) 
   var_list_na_check <- lapply(var_list, function(x) length(na.omit(x[,2]))) 
   
-  # cutting some countries that do not have more than 1,000 obs for the target variable
+  # cutting some countries that do not have more than 1,000 obs for the target variable (2) 
   zero_obs <- which(unlist(var_list_na_check) < 1000) 
   var_list <- var_list[-c(zero_obs)]
   country_names_c <- country_names[-zero_obs]
