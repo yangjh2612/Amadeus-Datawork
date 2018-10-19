@@ -179,12 +179,12 @@ fun_read_by_country <- function(filename_list, country_name_list, filename_nuts_
 
     cdata <- fread(rfn, header=T)
 
-    if (sum(country_name_list == country_names[c(18,26,31,32,40)])==1){
-        cdata$ZIPCODE <- cdata$ZIPCODE # as.integer, as.character, or none
-    } else if(sum(country_name_list == country_names[c(44)])==1){
-        cdata$ZIPCODE <- as.character(cdata$ZIPCODE)
+    if (sum(country_name_list == c("Ireland", "Malta", "Poland", "Portugal", "Sweden"))==1){
+      cdata$ZIPCODE <- cdata$ZIPCODE # as.integer, as.character, or none
+    } else if(sum(country_name_list == c("United Kingdom"))==1){
+       cdata$ZIPCODE <- as.character(cdata$ZIPCODE)
     } else{
-        cdata$ZIPCODE <- as.integer(cdata$ZIPCODE)
+       cdata$ZIPCODE <- as.integer(cdata$ZIPCODE)
     }
      
      
@@ -326,7 +326,7 @@ filenames_nuts <- c('NUTS/pc2016_al_NUTS-2013_v2.3.csv','NUTS/pc2016_at_NUTS-201
 
 print("Commence reading and cleaning data...")
 
-for (i in 1:44) {
+for (i in 1:length(filenames)) {
     #tryCatch({
     fun_read_by_country(filenames[[i]], country_names[[i]], filenames_nuts[[i]])      
     #}, error=function(e){})
@@ -342,7 +342,7 @@ print("All complete")
 ##
 
 
-i <- 44
+i <- match(c("United Kingdom"), country_names)
 country_names[[i]]
 fun_read_by_country(filenames[[i]], country_names[[i]], filenames_nuts[[i]])    
 ##
