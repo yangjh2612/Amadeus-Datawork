@@ -8,7 +8,7 @@ country_names  <- c('Albania', 'Austria', 'Belarus', 'Belgium', 'Bosnia and Herz
 
 
 ## ------------------------------------------------------------------------
-# summary statistics (3)
+# summary statistics (5)
 library(plyr)
 library(dplyr)
 library(zoo)
