@@ -212,6 +212,9 @@ fun_read_by_country <- function(filename_list, country_name_list, filename_nuts_
     # 2. compute firm age from CLOSDATE_year and DATEINC_char
     cdata$DATEINC_year <- as.numeric(substr(cdata$DATEINC_char, 7, 10))
     cdata$CLOSDATE_year <- as.numeric(cdata$CLOSDATE_year)
+    cdata[cdata$DATEINC_year > cdata$CLOSDATE_year]$DATEINC_year <- NA      # no negative firm ages
+    DATEINC_errors <- cdata$DATEINC_year < 1400                             # no impossible incorporation dates before 1400
+    cdata[DATEINC_errors]$DATEINC_year <- as.numeric(regmatches(cdata[DATEINC_errors]$DATEINC_char, gregexpr("\\d\\d\\d\\d+", cdata[DATEINC_errors]$DATEINC_char)))
     cdata$Firm_Age <-  cdata$CLOSDATE_year - cdata$DATEINC_year
     
     # This bit is not important for the country-wise handling of the data; only if lists larger than one are collected at the same time
