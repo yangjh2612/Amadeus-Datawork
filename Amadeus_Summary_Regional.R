@@ -5,6 +5,7 @@ require(entropy)
 
 # Shannon entropy
 entrop <- function(dat, na.rm="ignored") {
+     dat <- na.omit(dat)
      ee <- entropy.empirical(dat)
      return(ee)
 }
