@@ -81,18 +81,13 @@ desc_stat_by_file <- function(nuts_code, cfile, country, stat_variables = c("CP"
     Cleaned_dat_INDEX <- subset(Cleaned_dat_INDEX, select = c(IDNR, Year, get(nuts_code)))
     
     # merge into one frame
-    Cleaned_dat_INDEX <- merge(Cleaned_dat_INDEX, Cleaned_dat_Productivity, c("IDNR", "Year"))
-    rm(Cleaned_dat_Productivity)
-    Cleaned_dat_INDEX <- merge(Cleaned_dat_INDEX, Cleaned_dat_Profitability, c("IDNR", "Year"))
-    rm(Cleaned_dat_Profitability)
-    Cleaned_dat_INDEX <- merge(Cleaned_dat_INDEX, Cleaned_dat_cost_structure, c("IDNR", "Year"))
-    rm(Cleaned_dat_cost_structure)
-    Cleaned_dat_INDEX <- merge(Cleaned_dat_INDEX, Cleaned_dat_firm_size, c("IDNR", "Year"))
-    rm(Cleaned_dat_firm_size)
-    unique_columns <- !(colnames(Cleaned_dat_RD) %in% colnames(Cleaned_dat_INDEX))
-    unique_columns[match(c("IDNR", "Year"), colnames(Cleaned_dat_RD))] <- TRUE
-    Cleaned_dat_INDEX <- merge(Cleaned_dat_INDEX, Cleaned_dat_RD[unique_columns], c("IDNR", "Year"))
-    rm(Cleaned_dat_RD)
+    framelist <- list(Cleaned_dat_Productivity, Cleaned_dat_Profitability, Cleaned_dat_cost_structure, Cleaned_dat_firm_size, Cleaned_dat_RD)
+    for (frame in framelist) {
+        unique_columns <- !(colnames(frame) %in% colnames(Cleaned_dat_INDEX))
+        unique_columns[match(c("IDNR", "Year"), colnames(frame))] <- TRUE
+        Cleaned_dat_INDEX <- merge(Cleaned_dat_INDEX, frame[unique_columns], c("IDNR", "Year"))
+        rm(frame)
+    }
     
     #print(colnames(Cleaned_dat_INDEX))
     retained_columns <- c("Year", nuts_code, "EMPL", stat_variables)
@@ -107,7 +102,6 @@ desc_stat_by_file <- function(nuts_code, cfile, country, stat_variables = c("CP"
         agg <-aggregate(.~nuts_code+Year, Cleaned_dat_INDEX, FUN=func, na.rm=T, na.action=NULL)
         agg <- agg[!(agg[,"nuts_code"] == ""),]
         colnames(agg) <- c(nuts_code, "Year", paste(stat_variables, func, sep="_"))
-        print(colnames(agg))
         if(exists("all_results")) {
             all_results <- merge(all_results, agg, c(nuts_code, "Year"))
         } else {
@@ -121,13 +115,9 @@ desc_stat_by_file <- function(nuts_code, cfile, country, stat_variables = c("CP"
     for(i in 1:length(dplyr_flist)) {
         func = dplyr_flist[[i]]
         func_name = dplyr_fnames[[i]]
-        print("FUUU")
-        print(length(Cleaned_dat_INDEX_weights$EMPL))
         agg <- Cleaned_dat_INDEX_weights %>% group_by(nuts_code, Year) %>% summarise_at(vars(-EMPL,-Year,-nuts_code),funs(func(., EMPL, na.rm=T)))
         agg <- agg[!(agg[,"nuts_code"] == ""),]
-        print("FUUUYYYY")
         colnames(agg) <- c(nuts_code, "Year", paste(stat_variables, func_name, sep="_"))
-        print(colnames(agg))
         if(exists("all_results")) {
             all_results <- merge(all_results, agg, c(nuts_code, "Year"))
         } else {
@@ -173,8 +163,8 @@ nuts_code <- paste("NUTS", nuts_level, sep="_")
 
 filenames = c("panels_J!&Albania.Rda", "panels_J!&Austria.Rda", "panels_J!&Belarus.Rda", "panels_J!&Belgium.Rda", "panels_J!&Bulgaria.Rda", "panels_J!&Croatia.Rda", "panels_J!&Cyprus.Rda", "panels_J!&Czech Republic.Rda", "panels_J!&Denmark.Rda", "panels_J!&Estonia.Rda", "panels_J!&Finland.Rda", "panels_J!&France.Rda", "panels_J!&Germany.Rda", "panels_J!&Greece.Rda", "panels_J!&Hungary.Rda", "panels_J!&Iceland.Rda", "panels_J!&Ireland.Rda", "panels_J!&Italy.Rda", "panels_J!&Kosovo.Rda", "panels_J!&Latvia.Rda", "panels_J!&Liechtenstein.Rda", "panels_J!&Lithuania.Rda", "panels_J!&Luxembourg.Rda", "panels_J!&Malta.Rda", "panels_J!&Moldova.Rda", "panels_J!&Monaco.Rda", "panels_J!&Montenegro.Rda", "panels_J!&Netherlands.Rda", "panels_J!&Norway.Rda", "panels_J!&Poland.Rda", "panels_J!&Portugal.Rda", "panels_J!&Russian Federation.Rda", "panels_J!&Serbia.Rda", "panels_J!&Slovakia.Rda", "panels_J!&Spain.Rda", "panels_J!&Sweden.Rda", "panels_J!&Switzerland.Rda", "panels_J!&Turkey.Rda", "panels_J!&United Kingdom.Rda")
 country_names = c("Albania", "Austria", "Belarus", "Belgium", "Bulgaria", "Croatia", "Cyprus", "Czech Republic", "Denmark", "Estonia", "Finland", "France", "Germany", "Greece", "Hungary", "Iceland", "Ireland", "Italy", "Kosovo", "Latvia", "Liechtenstein", "Lithuania", "Luxembourg", "Malta", "Moldova", "Monaco", "Montenegro", "Netherlands", "Norway", "Poland", "Portugal", "Russian Federation", "Serbia", "Slovakia", "Spain", "Sweden", "Switzerland", "Turkey", "United Kingdom")
-filenames = c("panels_J!&Austria.Rda", "panels_J!&Serbia.Rda")
-country_names = c("Austria", "Serbia")
+#filenames = c("panels_J!&Austria.Rda", "panels_J!&Serbia.Rda")
+#country_names = c("Austria", "Serbia")
 
 desc_stats <- desc_stat_all_files(nuts_code, filenames, country_names)
 print(desc_stats)
