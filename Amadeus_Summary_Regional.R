@@ -167,7 +167,7 @@ country_names = c("Albania", "Austria", "Belarus", "Belgium", "Bulgaria", "Croat
 #country_names = c("Austria", "Serbia")
 
 desc_stats <- desc_stat_all_files(nuts_code, filenames, country_names)
-print(desc_stats)
+#print(desc_stats)
 output_file_name = paste(paste("Reg", nuts_code, sep="_"), "CP_RoC_desc_stats.Rda", sep="_")
 save(desc_stats, file=output_file_name)
 
