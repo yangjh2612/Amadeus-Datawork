@@ -163,16 +163,25 @@ desc_stat_all_files <- function (nuts_code, filenames, country_names, stat_varia
     
 }
 
+# main entry point
+
+# NUTS level. May be {1, 2, 3}
 nuts_level <- 1
 nuts_code <- paste("NUTS", nuts_level, sep="_")
 
+# variables for which the descriptive statistics are to be computed
+stat_variables = c("CP", "RoC")
+
+# input files
 filenames = c("panels_J!&Albania.Rda", "panels_J!&Austria.Rda", "panels_J!&Belarus.Rda", "panels_J!&Belgium.Rda", "panels_J!&Bulgaria.Rda", "panels_J!&Croatia.Rda", "panels_J!&Cyprus.Rda", "panels_J!&Czech Republic.Rda", "panels_J!&Denmark.Rda", "panels_J!&Estonia.Rda", "panels_J!&Finland.Rda", "panels_J!&France.Rda", "panels_J!&Germany.Rda", "panels_J!&Greece.Rda", "panels_J!&Hungary.Rda", "panels_J!&Iceland.Rda", "panels_J!&Ireland.Rda", "panels_J!&Italy.Rda", "panels_J!&Kosovo.Rda", "panels_J!&Latvia.Rda", "panels_J!&Liechtenstein.Rda", "panels_J!&Lithuania.Rda", "panels_J!&Luxembourg.Rda", "panels_J!&Malta.Rda", "panels_J!&Moldova.Rda", "panels_J!&Monaco.Rda", "panels_J!&Montenegro.Rda", "panels_J!&Netherlands.Rda", "panels_J!&Norway.Rda", "panels_J!&Poland.Rda", "panels_J!&Portugal.Rda", "panels_J!&Russian Federation.Rda", "panels_J!&Serbia.Rda", "panels_J!&Slovakia.Rda", "panels_J!&Spain.Rda", "panels_J!&Sweden.Rda", "panels_J!&Switzerland.Rda", "panels_J!&Turkey.Rda", "panels_J!&United Kingdom.Rda")
 country_names = c("Albania", "Austria", "Belarus", "Belgium", "Bulgaria", "Croatia", "Cyprus", "Czech Republic", "Denmark", "Estonia", "Finland", "France", "Germany", "Greece", "Hungary", "Iceland", "Ireland", "Italy", "Kosovo", "Latvia", "Liechtenstein", "Lithuania", "Luxembourg", "Malta", "Moldova", "Monaco", "Montenegro", "Netherlands", "Norway", "Poland", "Portugal", "Russian Federation", "Serbia", "Slovakia", "Spain", "Sweden", "Switzerland", "Turkey", "United Kingdom")
 #filenames = c("panels_J!&Austria.Rda", "panels_J!&Serbia.Rda")
 #country_names = c("Austria", "Serbia")
 
-desc_stats <- desc_stat_all_files(nuts_code, filenames, country_names)
+desc_stats <- desc_stat_all_files(nuts_code, filenames, country_names, stat_variables)
 #print(desc_stats)
+
+# save descriptive statistics
 output_file_name = paste(paste("Reg", nuts_code, sep="_"), "desc_stats.Rda", sep="_")
 save(desc_stats, file=output_file_name)
 
