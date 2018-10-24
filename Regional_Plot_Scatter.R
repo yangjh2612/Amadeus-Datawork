@@ -12,7 +12,7 @@ plot_desc_stats_CP_vs_RoC <- function(desc_stats) {
 nuts_level <- 2
 
 # load data
-stats_file_name <- paste(paste("Reg_NUTS", nuts_level, sep="_"), "CP_RoC_desc_stats.Rda", sep="_")
+stats_file_name <- paste(paste("Reg_NUTS", nuts_level, sep="_"), "desc_stats.Rda", sep="_")
 load(file=stats_file_name)   # loads frame desc_stats
 
 # clear unrealistic values

@@ -69,7 +69,7 @@ eu_nuts <- subset(eushp, LEVL_CODE == nuts_level)
 nutsshape <- tidy(eu_nuts, region="NUTS_ID")
 
 # load and prepare data
-stats_file_name <- paste(paste("Reg_NUTS", nuts_level, sep="_"), "CP_RoC_desc_stats.Rda", sep="_")
+stats_file_name <- paste(paste("Reg_NUTS", nuts_level, sep="_"), "desc_stats.Rda", sep="_")
 load(file=stats_file_name)   # loads frame desc_stats
 desc_stats <- desc_stats[desc_stats$CP_num_obs > 15 & desc_stats$RoC_num_obs > 15, ]
 
