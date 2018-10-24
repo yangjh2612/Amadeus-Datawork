@@ -6,23 +6,24 @@ library("rgdal")
 library("dplyr")
 
 
-map_plot_by_var <- function(property) {
+map_plot_by_var <- function(property, nuts_code="NUTS_2") {
     
     for(year in 2006:2015) {
         desc_stats_yr <- desc_stats[desc_stats$Year == year, ]
     
         # match regions in shapefile and data
-        shape <- nuts2shape
-        #shape$CP_median <- desc_stats$CP_median[match(shape$id, desc_stats$NUTS_2)]
-        shape$prop <- desc_stats_yr[,property][match(shape$id, desc_stats_yr$NUTS_2)]
+        shape <- nutsshape
+        #shape$prop <- desc_stats_yr[,property][match(shape$id, desc_stats_yr$NUTS_2)]
+        shape$prop <- desc_stats_yr[,property][match(shape$id, desc_stats_yr[[nuts_code]])]
         
         shape$Year <- year
         
         # separate regions with and without data
         shape_data <- subset(shape, !is.na(shape$prop))
         shape_nodata <- subset(shape, is.na(shape$prop))
+
         # remove French overseas departements (they would cause Europe to be much smaller in the map)
-        shape_nodata <- shape_nodata[!(shape_nodata$id %in% c("FRY1", "FRY2", "FRY3", "FRY4", "FRY5")), ]
+        shape_nodata <- shape_nodata[!(shape_nodata$id %in% c("FRY1", "FRY2", "FRY3", "FRY4", "FRY5", "FRY")), ]
         if(exists("all_shape_data")) {
             all_shape_data <- rbind(all_shape_data, shape_data)
             all_shape_nodata <- rbind(all_shape_nodata, shape_nodata)
@@ -32,7 +33,8 @@ map_plot_by_var <- function(property) {
         }
     }
     
-    print(median(all_shape_data$prop, na.rm=T))
+    #print(median(all_shape_data$prop, na.rm=T))
+
     # plot                                                    
     ggplot() + 
         geom_polygon(data=all_shape_nodata, aes(long, lat, group = group), 
@@ -49,25 +51,26 @@ map_plot_by_var <- function(property) {
         coord_fixed(ratio=1)                                                             # force aspect ratio 1, i.e. no grotesque distortions 
 
     # save
-    outputfilename = paste(paste("NUTS_2_map_", property, sep=""), ".pdf", sep="")
+    outputfilename = paste(paste(paste(paste("NUTS", nuts_level, sep="_"), "map", sep="_"), property, sep="_"), ".pdf", sep="")
     ggsave(file = outputfilename)
 }
 
 
-
-
 # main entry point
+nuts_level <- 1
+nuts_code <- paste("NUTS", nuts_level, sep="_")
 
 # read shapefile and prepare as data.frame
 # shapefile is from https://ec.europa.eu/eurostat/web/gisco/geodata/reference-data/administrative-units-statistical-units/nuts
 # ... the NUTS2016, 1:3M, SHP version.
 # ... zip must be unpacked and placed in the directory "shapefile" which must be a subdirectory of cwd (current working directory).
 eushp <- readOGR(dsn = "shapefile/", layer = "NUTS_RG_03M_2016_3035")
-eu_nuts2 <- subset(eushp, LEVL_CODE == 2)
-nuts2shape <- tidy(eu_nuts2, region="NUTS_ID")
+eu_nuts <- subset(eushp, LEVL_CODE == nuts_level)
+nutsshape <- tidy(eu_nuts, region="NUTS_ID")
 
 # load and prepare data
-load("NUTS_2_CP_RoC_desc_stats.Rda", verbose=T)
+stats_file_name <- paste(paste("Reg_NUTS", nuts_level, sep="_"), "desc_stats.Rda", sep="_")
+load(file=stats_file_name)   # loads frame desc_stats
 desc_stats <- desc_stats[desc_stats$CP_num_obs > 15 & desc_stats$RoC_num_obs > 15, ]
 
 # variables to be plotted
@@ -76,5 +79,5 @@ plotlist = list("CP_median", "RoC_median", "CP_entrop", "RoC_entrop")
 # commence plotting
 for (var in plotlist) {
     print(paste("Commencing", var, sep=" "))
-    map_plot_by_var(var)
+    map_plot_by_var(var, nuts_code)
 }
