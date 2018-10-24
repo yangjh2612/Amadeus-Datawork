@@ -116,7 +116,12 @@ desc_stat_by_file <- function(nuts_code, cfile, country, stat_variables = c("CP"
         func = dplyr_flist[[i]]
         func_name = dplyr_fnames[[i]]
         agg <- Cleaned_dat_INDEX_weights %>% group_by(nuts_code, Year) %>% summarise_at(vars(-EMPL,-Year,-nuts_code),funs(func(., EMPL, na.rm=T)))
-        agg <- agg[!(agg[,"nuts_code"] == ""),]
+        
+        # Removing entries without NUTS record. This must control for empty results since agg[,"nuts_code"] will otherwise fail
+        if(nrow(agg) > 0){
+            agg <- agg[!(agg[,"nuts_code"] == ""),]
+        }
+    
         colnames(agg) <- c(nuts_code, "Year", paste(stat_variables, func_name, sep="_"))
         if(exists("all_results")) {
             all_results <- merge(all_results, agg, c(nuts_code, "Year"))
