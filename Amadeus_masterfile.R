@@ -54,7 +54,8 @@ fun_data_clean <- function(dat, def_d, def_d_list){
       filter(!is.na(NAICS_CORE_CODE)) %>% # naics code
       filter(!is.na(IDNR)) %>% # firm indicator 
       filter(CLOSDATE_year >= 2006 & CLOSDATE_year <= 2015) %>% # year cut 
-      filter(REPBAS == 'Unconsolidated data') %>% # only either consolidate or unconsolidate   
+      #filter(REPBAS == 'Unconsolidated data') %>% # only either consolidate or unconsolidate   
+      filter(CONSOL == 'C1' | 'U1') %>% #  consolidate or unconsolidate with no companion statements 
       distinct(IDNR, CLOSDATE_year, .keep_all = TRUE) %>% # removing duplicated rows
       mutate(EMPL = replace(EMPL, EMPL <= 0, NA)) %>%
       mutate(TOAS = replace(TOAS, TOAS <= 0, NA)) %>%
