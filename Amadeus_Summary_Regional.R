@@ -177,7 +177,18 @@ nuts_level <- 1
 nuts_code <- paste("NUTS", nuts_level, sep="_")
 
 # variables for which the descriptive statistics are to be computed
-stat_variables = c("CP", "RoC", )
+stat_variables = c("CP", "RoC", "PW_ratio", "TOAS", "LP", "CP_change")
+
+# Stats variables could include any or all of the following:
+# [1] "LP"             
+# [5] "CP"              "LP_change"       "CP_change"       "Zeta"           
+# [9] "RoC"             "RoC_fix"         "RoC_RCEM"        "RoC_RTAS"       
+#[13] "WS"              "PS"              "PW_ratio"        "C_com"          
+#[17] "PW_ratio_change" "PW_ratio_lr"     "SALE"            "EMPL"           
+#[21] "TOAS"            "SALE_change"     "EMPL_change"     "VA"             
+#[25] "SALE_lr"         "EMPL_lr"         "TOAS_lr"         "RD"             
+#[29] "TOAS.1"          "CUAS"            "FIAS"            "IFAS"           
+#[33] "TFAS"            "OCAS"            "OFAS"           
 
 # input files
 filenames = c("panels_J!&Albania.Rda", "panels_J!&Austria.Rda", "panels_J!&Belarus.Rda", "panels_J!&Belgium.Rda", "panels_J!&Bulgaria.Rda", "panels_J!&Croatia.Rda", "panels_J!&Cyprus.Rda", "panels_J!&Czech Republic.Rda", "panels_J!&Denmark.Rda", "panels_J!&Estonia.Rda", "panels_J!&Finland.Rda", "panels_J!&France.Rda", "panels_J!&Germany.Rda", "panels_J!&Greece.Rda", "panels_J!&Hungary.Rda", "panels_J!&Iceland.Rda", "panels_J!&Ireland.Rda", "panels_J!&Italy.Rda", "panels_J!&Kosovo.Rda", "panels_J!&Latvia.Rda", "panels_J!&Liechtenstein.Rda", "panels_J!&Lithuania.Rda", "panels_J!&Luxembourg.Rda", "panels_J!&Malta.Rda", "panels_J!&Moldova.Rda", "panels_J!&Monaco.Rda", "panels_J!&Montenegro.Rda", "panels_J!&Netherlands.Rda", "panels_J!&Norway.Rda", "panels_J!&Poland.Rda", "panels_J!&Portugal.Rda", "panels_J!&Russian Federation.Rda", "panels_J!&Serbia.Rda", "panels_J!&Slovakia.Rda", "panels_J!&Spain.Rda", "panels_J!&Sweden.Rda", "panels_J!&Switzerland.Rda", "panels_J!&Turkey.Rda", "panels_J!&United Kingdom.Rda")
