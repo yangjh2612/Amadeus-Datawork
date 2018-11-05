@@ -74,7 +74,7 @@ load(file=stats_file_name)   # loads frame desc_stats
 desc_stats <- desc_stats[desc_stats$CP_num_obs > 15 & desc_stats$RoC_num_obs > 15, ]
 
 # variables to be plotted
-plotlist = list("CP_median", "RoC_median", "CP_entrop", "RoC_entrop")
+plotlist = list("CP_median", "RoC_median", "CP_entrop", "RoC_entrop", "PW_ratio_median", "TOAS_median", "LP_median", "CP_change_median", "PW_ratio_entrop", "TOAS_entrop", "LP_entrop", "CP_change_entrop")
 
 # commence plotting
 for (var in plotlist) {
