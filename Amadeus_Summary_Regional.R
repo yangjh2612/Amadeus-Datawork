@@ -177,7 +177,7 @@ nuts_level <- 2
 nuts_code <- paste("NUTS", nuts_level, sep="_")
 
 # variables for which the descriptive statistics are to be computed
-stat_variables = c("CP", "RoC", "PW_ratio", "TOAS", "LP", "CP_change")
+stat_variables = c("CP", "RoC", "PW_ratio", "TOAS", "LP", "CP_change", "C_com")
 
 # Stats variables could include any or all of the following:
 # [1] "LP"             
