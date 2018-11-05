@@ -10,7 +10,7 @@ plot_desc_stats_CP_vs_RoC <- function(desc_stats, axis1, axis2) {
 }
 
 # main entry point
-nuts_level <- 1
+nuts_level <- 2
 
 # load data
 stats_file_name <- paste(paste("Reg_NUTS", nuts_level, sep="_"), "desc_stats.Rda", sep="_")

@@ -57,7 +57,7 @@ map_plot_by_var <- function(property, nuts_code="NUTS_2") {
 
 
 # main entry point
-nuts_level <- 1
+nuts_level <- 2
 nuts_code <- paste("NUTS", nuts_level, sep="_")
 
 # read shapefile and prepare as data.frame

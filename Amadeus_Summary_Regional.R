@@ -173,7 +173,7 @@ desc_stat_all_files <- function (nuts_code, filenames, country_names, country_sh
 # main entry point
 
 # NUTS level. May be {0, 1, 2, 3}
-nuts_level <- 1
+nuts_level <- 2
 nuts_code <- paste("NUTS", nuts_level, sep="_")
 
 # variables for which the descriptive statistics are to be computed
