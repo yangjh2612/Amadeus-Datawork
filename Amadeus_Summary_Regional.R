@@ -66,7 +66,7 @@ num_obs <- function(dat, w = "ignored", na.rm="ignored") {
 }
 
 # Compute descriptive statistics of capital productivity and profitability (returns on capital) by NUTS2 region
-desc_stat_by_file <- function(nuts_code, cfile, country, stat_variables = c("CP", "RoC")) {
+desc_stat_by_file <- function(nuts_code, cfile, country, country_short_code, stat_variables = c("CP", "RoC")) {
     print(paste("Commencing", country, sep=" "))
     
     # load data file
@@ -78,7 +78,12 @@ desc_stat_by_file <- function(nuts_code, cfile, country, stat_variables = c("CP"
     }
     
     # remove what we do not need
-    Cleaned_dat_INDEX <- subset(Cleaned_dat_INDEX, select = c(IDNR, Year, get(nuts_code)))
+    if(nuts_code!="NUTS_0") {
+        Cleaned_dat_INDEX <- subset(Cleaned_dat_INDEX, select = c(IDNR, Year, get(nuts_code)))
+    } else {
+        Cleaned_dat_INDEX <- subset(Cleaned_dat_INDEX, select = c(IDNR, Year))
+        Cleaned_dat_INDEX["NUTS_0"] <- country_short_code
+    }
     
     # merge into one frame
     framelist <- list(Cleaned_dat_Productivity, Cleaned_dat_Profitability, Cleaned_dat_cost_structure, Cleaned_dat_firm_size, Cleaned_dat_RD)
@@ -142,14 +147,15 @@ desc_stat_by_file <- function(nuts_code, cfile, country, stat_variables = c("CP"
 }
 
 # handle iteration over files list, call function to compute descriptive statistics for all, merge results
-desc_stat_all_files <- function (nuts_code, filenames, country_names, stat_variables = c("CP", "RoC")) {
+desc_stat_all_files <- function (nuts_code, filenames, country_names, country_short, stat_variables = c("CP", "RoC")) {
 
     nfiles = length(filenames)
     
     for(i in 1:nfiles) {
         cfile = filenames[[i]]
         country = country_names[[i]]
-        res <- desc_stat_by_file(nuts_code, cfile, country)
+        country_short_code = country_short[[i]]
+        res <- desc_stat_by_file(nuts_code, cfile, country, country_short_code, stat_variables)
         if(!is.na(res)) {
             if(exists("all_results")) {
                 all_results <- rbind(all_results, res)
@@ -157,6 +163,7 @@ desc_stat_all_files <- function (nuts_code, filenames, country_names, stat_varia
                 all_results <- res
             }
         }
+        #print(all_results)
     }
     
     return(all_results)
@@ -165,21 +172,33 @@ desc_stat_all_files <- function (nuts_code, filenames, country_names, stat_varia
 
 # main entry point
 
-# NUTS level. May be {1, 2, 3}
-nuts_level <- 1
+# NUTS level. May be {0, 1, 2, 3}
+nuts_level <- 2
 nuts_code <- paste("NUTS", nuts_level, sep="_")
 
 # variables for which the descriptive statistics are to be computed
-stat_variables = c("CP", "RoC")
+stat_variables = c("CP", "RoC", "PW_ratio", "TOAS", "LP", "CP_change", "C_com")
+
+# Stats variables could include any or all of the following:
+# [1] "LP"             
+# [5] "CP"              "LP_change"       "CP_change"       "Zeta"           
+# [9] "RoC"             "RoC_fix"         "RoC_RCEM"        "RoC_RTAS"       
+#[13] "WS"              "PS"              "PW_ratio"        "C_com"          
+#[17] "PW_ratio_change" "PW_ratio_lr"     "SALE"            "EMPL"           
+#[21] "TOAS"            "SALE_change"     "EMPL_change"     "VA"             
+#[25] "SALE_lr"         "EMPL_lr"         "TOAS_lr"         "RD"             
+#[29] "TOAS.1"          "CUAS"            "FIAS"            "IFAS"           
+#[33] "TFAS"            "OCAS"            "OFAS"           
 
 # input files
 filenames = c("panels_J!&Albania.Rda", "panels_J!&Austria.Rda", "panels_J!&Belarus.Rda", "panels_J!&Belgium.Rda", "panels_J!&Bulgaria.Rda", "panels_J!&Croatia.Rda", "panels_J!&Cyprus.Rda", "panels_J!&Czech Republic.Rda", "panels_J!&Denmark.Rda", "panels_J!&Estonia.Rda", "panels_J!&Finland.Rda", "panels_J!&France.Rda", "panels_J!&Germany.Rda", "panels_J!&Greece.Rda", "panels_J!&Hungary.Rda", "panels_J!&Iceland.Rda", "panels_J!&Ireland.Rda", "panels_J!&Italy.Rda", "panels_J!&Kosovo.Rda", "panels_J!&Latvia.Rda", "panels_J!&Liechtenstein.Rda", "panels_J!&Lithuania.Rda", "panels_J!&Luxembourg.Rda", "panels_J!&Malta.Rda", "panels_J!&Moldova.Rda", "panels_J!&Monaco.Rda", "panels_J!&Montenegro.Rda", "panels_J!&Netherlands.Rda", "panels_J!&Norway.Rda", "panels_J!&Poland.Rda", "panels_J!&Portugal.Rda", "panels_J!&Russian Federation.Rda", "panels_J!&Serbia.Rda", "panels_J!&Slovakia.Rda", "panels_J!&Spain.Rda", "panels_J!&Sweden.Rda", "panels_J!&Switzerland.Rda", "panels_J!&Turkey.Rda", "panels_J!&United Kingdom.Rda")
 country_names = c("Albania", "Austria", "Belarus", "Belgium", "Bulgaria", "Croatia", "Cyprus", "Czech Republic", "Denmark", "Estonia", "Finland", "France", "Germany", "Greece", "Hungary", "Iceland", "Ireland", "Italy", "Kosovo", "Latvia", "Liechtenstein", "Lithuania", "Luxembourg", "Malta", "Moldova", "Monaco", "Montenegro", "Netherlands", "Norway", "Poland", "Portugal", "Russian Federation", "Serbia", "Slovakia", "Spain", "Sweden", "Switzerland", "Turkey", "United Kingdom")
+country_short = c("AL", "AT", "BY", "BE", "BG", "HR", "CY", "CZ", "DK", "EE", "FI", "FR", "DE", "GR", "HU", "IS", "IE", "IT", "XK", "LV", "LI", "LT", "LU", "MT", "MD", "MC", "ME", "NL", "NO", "PL", "PT", "RU", "RS", "SK", "ES", "SE", "CH", "TK", "UK")
 #filenames = c("panels_J!&Austria.Rda", "panels_J!&Serbia.Rda")
 #country_names = c("Austria", "Serbia")
 
-desc_stats <- desc_stat_all_files(nuts_code, filenames, country_names, stat_variables)
-#print(desc_stats)
+desc_stats <- desc_stat_all_files(nuts_code, filenames, country_names, country_short, stat_variables)
+print(desc_stats)
 
 # save descriptive statistics
 output_file_name = paste(paste("Reg", nuts_code, sep="_"), "desc_stats.Rda", sep="_")

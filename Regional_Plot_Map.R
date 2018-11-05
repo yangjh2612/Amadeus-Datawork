@@ -57,7 +57,7 @@ map_plot_by_var <- function(property, nuts_code="NUTS_2") {
 
 
 # main entry point
-nuts_level <- 1
+nuts_level <- 2
 nuts_code <- paste("NUTS", nuts_level, sep="_")
 
 # read shapefile and prepare as data.frame
@@ -74,7 +74,7 @@ load(file=stats_file_name)   # loads frame desc_stats
 desc_stats <- desc_stats[desc_stats$CP_num_obs > 15 & desc_stats$RoC_num_obs > 15, ]
 
 # variables to be plotted
-plotlist = list("CP_median", "RoC_median", "CP_entrop", "RoC_entrop")
+plotlist = list("CP_median", "RoC_median", "CP_entrop", "RoC_entrop", "PW_ratio_median", "TOAS_median", "LP_median", "CP_change_median", "C_com_median", "PW_ratio_entrop", "TOAS_entrop", "LP_entrop", "CP_change_entrop", "C_com_entropy")
 
 # commence plotting
 for (var in plotlist) {
