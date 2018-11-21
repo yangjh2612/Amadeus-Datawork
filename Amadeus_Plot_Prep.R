@@ -367,7 +367,7 @@ return(hist_final)
 }
 
 
-EMPL_change_mean_info <- fun_info_gen_mean(dat_list = Firm_size_list_mean,  var_ind = 2,  cut_ind = 0, cut_neg = 0.025, cut_pov = 0.975, bin_num = 100, log_ind = 0)
+
 
 TOAS_change_mean_info <- fun_info_gen_mean(dat_list = Firm_size_list_mean,  var_ind = 3,  cut_ind = 0, cut_neg = 0.025, cut_pov = 0.975, bin_num = 100, log_ind = 0)
 
