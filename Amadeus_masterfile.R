@@ -21,51 +21,56 @@ fun_data_clean <- function(dat){
     filter(CONSOL == 'C1' | CONSOL == 'U1') %>% #  consolidate or unconsolidate with no companion statements 
     distinct(IDNR, CLOSDATE_year, .keep_all = TRUE) %>% # remove duplicated rows
     
+    # remove nonsensical values
     mutate(EMPL = replace(EMPL, EMPL <= 0, NA),
            TOAS = replace(TOAS, TOAS <= 0, NA),
            STAF = replace(STAF, STAF < 0, NA),
-           TURN = replace(TURN, TURN < 0, NA)) %>% # remove nonsensical values
+           TURN = replace(TURN, TURN < 0, NA)) %>% 
     
     
     arrange(IDNR, CLOSDATE_year) %>% # arranging data by firm and year
     
     
    
-    mutate(VA = EBTA + STAF, #Imputed Value added (EBTA is earning before depreciation)
-           VA_AD = EBIT + STAF, #Imputed Value added (EBTA is earning before depreciation)
+    mutate(VA = as.numeric(EBTA) + as.numeric(STAF), #Imputed Value added (EBTA is earning before depreciation)
+           VA_AD = as.numeric(EBIT) + as.numeric(STAF), #Imputed Value added (EBTA is earning before depreciation)
            
-           LP= VA/EMPL, # Labor productivity
-           CP = VA/(FIAS+DEPR), # capital productivity with fixed asset
+           LP= as.numeric(VA)/as.numeric(EMPL), # Labor productivity
+           CP = as.numeric(VA)/(as.numeric(FIAS)+as.numeric(DEPR)), # capital productivity with fixed asset
            
-           LP_AD= VA_AD/EMPL, # Labor productivity after depreciation
-           CP_AD = VA_AD/FIAS, # capital productivity with fixed asset
+           LP_AD= as.numeric(VA_AD)/as.numeric(EMPL), # Labor productivity after depreciation
+           CP_AD = as.numeric(VA_AD)/as.numeric(FIAS), # capital productivity with fixed asset
            
-           C_com = TOAS/STAF, # capital intensity with total asset
-           C_com_FI = FIAS/STAF, # capital intensity with fixed asset
+           C_com = as.numeric(TOAS)/as.numeric(STAF), # capital intensity with total asset
+           C_com_FI = as.numeric(FIAS)/as.numeric(STAF), # capital intensity with fixed asset
            
-           RoC_G = CF/(TOAS+DEPR), # gross profit rate with interest, CF = cash flow (gross profit + depreciation)
-           RoC_G_FI = EBTA/(FIAS+DEPR), # gross profit rate without interest 
-
-           RoC_G_AD = PL/TOAS, # gross profit rate with interest after depreciation
-           RoC_G_AD_FI = EBIT/FIAS, # gross profit rate without interest after depreciation 
+           RoC_G = as.numeric(CF)/(as.numeric(TOAS)+as.numeric(DEPR)), # gross profit rate with interest, CF = cash flow (gross profit + depreciation)
+           RoC_G_FI = as.numeric(EBTA)/(as.numeric(FIAS)+as.numeric(DEPR)), # gross profit rate without interest 
            
-           RoC_N = PLAT/TOAS, # net profit rate (after tax) 
+           RoC_G_AD = as.numeric(PL)/as.numeric(TOAS), # gross profit rate with interest after depreciation
+           RoC_G_AD_FI = as.numeric(EBIT)/as.numeric(FIAS), # gross profit rate without interest after depreciation 
+           
+           RoC_N = as.numeric(PLAT)/as.numeric(TOAS), # net profit rate (after tax) 
              
-           WS = STAF/VA, # wage share
-           WS_AD = STAF/VA_AD, # wage share after depreciation
+           WS = as.numeric(STAF)/as.numeric(VA), # wage share
+           WS_AD = as.numeric(STAF)/as.numeric(VA_AD), # wage share after depreciation
             
-           PW = EBTA/STAF, # profit wage ratio
-           PW_AD = EBIT/STAF # profit wage ratio after depreciation
+           PW = as.numeric(EBTA)/as.numeric(STAF), # profit wage ratio
+           PW_AD = as.numeric(EBIT)/as.numeric(STAF) # profit wage ratio after depreciation
            ) %>% 
   
     
     group_by(IDNR) %>% # group by firm index
     
     # firm size growth
-    mutate(EMPL_g = (EMPL - lag(EMPL,1))/lag(EMPL,1), 
-           FIAS_g = (FIAS - lag(FIAS,1))/lag(FIAS,1),
-           TOAS_g = (TOAS - lag(TOAS,1))/lag(TOAS,1),
-           SALE_g = (TURN - lag(TURN,1))/lag(TURN,1)
+    mutate(EMPL_g = (as.numeric(EMPL) - 
+                       lag(as.numeric(EMPL),1))/lag(as.numeric(EMPL),1), 
+           FIAS_g = (as.numeric(FIAS) - 
+                       lag(as.numeric(FIAS),1))/lag(as.numeric(FIAS),1),
+           TOAS_g = (as.numeric(TOAS) - 
+                       lag(as.numeric(TOAS),1))/lag(as.numeric(TOAS),1),
+           SALE_g = (as.numeric(TURN) - 
+                       lag(as.numeric(TURN),1))/lag(as.numeric(TURN),1)
            ) %>% 
     
     # productivity growth
@@ -76,13 +81,13 @@ fun_data_clean <- function(dat){
            LP_AD_g = (LP_AD - lag(LP_AD,1))/lag(LP_AD,1),
            
            Zeta = CP_g * (1-WS) + LP_g * WS,
-           Zeta_AD = CP_AD_g * (1-WD_AD) + LP_AD_g * WS_AD
+           Zeta_AD = CP_AD_g * (1-WS_AD) + LP_AD_g * WS_AD
            ) %>% # G_CP
     
     # etc
     
     mutate(PW_g = (PW - lag(PW,1))/lag(PW,1)) %>% #
-    mutate(PW_AD_g = (PW_AD - lag(PW_AD,1))/lag(PW_AD,1)) %>% #
+    mutate(PW_AD_g = (PW_AD - lag(PW_AD,1))/lag(PW_AD,1)) #
     
   return(data_c)
 }
@@ -109,8 +114,12 @@ fun_read_by_country <- function(filename_list, country_name_list, filename_nuts_
   print(paste("         Commence reading data: ", fn))
   
   rfn = paste(fn, ".csv", sep="")
+  #rfn = paste(fn, ".Rda", sep="")
   
-  cdata <- fread(rfn, header=T)
+  cdata <- fread(rfn, header=T, stringsAsFactors = F)
+  
+  save(cdata, file = paste(fn, ".Rda", sep = ""))
+  #load(rfn)
   
   if (sum(country_name_list == c("Ireland", "Malta", "Poland", "Portugal", "Sweden"))==1){
     cdata$ZIPCODE <- cdata$ZIPCODE # as.integer, as.character, or none
@@ -120,11 +129,7 @@ fun_read_by_country <- function(filename_list, country_name_list, filename_nuts_
     cdata$ZIPCODE <- as.integer(cdata$ZIPCODE)
   }
   
-  
-  #cdata$ZIPCODE <- as.integer(cdata$ZIPCODE) # as.integer, as.character, or none
-  
   fn_nuts = filename_nuts_list
-  #fn_nuts = filenames_nuts[[2]]
   
   if (!is.na(fn_nuts)) {
     cdata_nuts <- read.csv(fn_nuts, header=T, sep=";", stringsAsFactors = F)
@@ -143,16 +148,12 @@ fun_read_by_country <- function(filename_list, country_name_list, filename_nuts_
   }
   
   # 2. compute firm age from CLOSDATE_year and DATEINC_char
-  #cdata$DATEINC_year <- as.numeric(substr(cdata$DATEINC_char, 7, 10))
   cdata$CLOSDATE_year <- as.numeric(cdata$CLOSDATE_year)
-  #DATEINC_errors <- cdata$DATEINC_year < 1400                             # no impossible incorporation dates before 1400
-  #cdata[DATEINC_errors]$DATEINC_year <- as.numeric(regmatches(cdata[DATEINC_errors]$DATEINC_char, gregexpr("\\d\\d\\d\\d+", cdata[DATEINC_errors]$DATEINC_char)))
   cdata$DATEINC_char <- as.character(cdata$DATEINC_char)
   cdata$DATEINC_year <- as.numeric(regmatches(cdata$DATEINC_char, gregexpr("\\d\\d\\d\\d+", cdata$DATEINC_char)))
   cdata[cdata$DATEINC_year > cdata$CLOSDATE_year]$DATEINC_year <- NA      # no negative firm ages
   cdata$Firm_Age <-  cdata$CLOSDATE_year - cdata$DATEINC_year
   
-  # This bit is not important for the country-wise handling of the data; only if lists larger than one are collected at the same time
   # 3. join to list called country_list; see below!
   country_list <- append(country_list, list(cdata))
   
@@ -160,7 +161,7 @@ fun_read_by_country <- function(filename_list, country_name_list, filename_nuts_
   # 4. clean data
   print("     Reading data complete ... commence cleaning")
   
-  country_list_c <- lapply(country_list, fun_data_clean, def_d, def_d_list)
+  country_list_c <- lapply(country_list, fun_data_clean)
   
   # 5. put target variables in table form
   print("     Cleaning data complete ... commence preparing tables")
