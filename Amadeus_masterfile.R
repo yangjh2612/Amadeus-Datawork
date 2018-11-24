@@ -9,147 +9,92 @@ library(dplyr)
 
 
 # Functions
-
-# Put deflator into data.frame format
-fun_def_frame <- function(x){
-  def <- data.frame(CLOSDATE_year = c(2006:2015), deflator = as.numeric(x)) # year ahead
-  return(def)
-}
+# Functions
 
 # Data cleaning function
-fun_data_clean <- function(dat, def_d, def_d_list){
+fun_data_clean <- function(dat){
   
-  #print(dat$COUNTRY[1])
-  data_c <- dat
-  upper_case_rownames <- toupper(rownames(def_d))
-  upper_case_alternative <- toupper(rownames(def_d))
-  upper_case_alternative[upper_case_alternative == "MACEDONIA, FYR"] <- "MACEDONIA (FYROM)"
-  upper_case_alternative[upper_case_alternative == "MOLDOVA"] <- "REPUBLIC OF MOLDOVA"
-  
-  #print(def_d)
-  #def_ind <- which(rownames(def_d) == data_c$COUNTRY[1] | upper_case_rownames ==  data_c$COUNTRY[1] | upper_case_alternative == data_c$COUNTRY[1])
-  #print("def_ind")
-  #print(def_ind)
-  #print("def_d_list")
-  #print(def_d_list)
-  #print("rownames def_d")
-  #print(rownames(def_d))
-  #print("upper_case_rownames")
-  #print(upper_case_rownames)
-  #print("data_c$COUNTRY[1]")
-  #print(data_c$COUNTRY[1])
-  def_pick <- def_d_list
-  #print("selected successfully")
-  
-  #dim(cdata)
-  #data_c <- cdata
-  
-  
-  #data_c <- data_c[!(duplicated(data_c[,c(1,5)]) | duplicated(data_c[,c(1,5)], fromLast = TRUE)), ]
-  
-  
-  
-  data_c <- data_c %>%
+  data_c <- dat %>%
     filter(!is.na(CLOSDATE_year)) %>% # year
-    filter(!is.na(NAICS_CORE_CODE)) %>% # naics code
     filter(!is.na(IDNR)) %>% # firm indicator 
     filter(CLOSDATE_year >= 2006 & CLOSDATE_year <= 2015) %>% # year cut 
-    #filter(REPBAS == 'Unconsolidated data') %>% # only either consolidate or unconsolidate   
     filter(CONSOL == 'C1' | CONSOL == 'U1') %>% #  consolidate or unconsolidate with no companion statements 
-    distinct(IDNR, CLOSDATE_year, .keep_all = TRUE) %>% # removing duplicated rows
-    mutate(EMPL = replace(EMPL, EMPL <= 0, NA)) %>%
-    mutate(TOAS = replace(TOAS, TOAS <= 0, NA)) %>%
-    mutate(STAF = replace(STAF, STAF < 0, NA)) %>%
-    mutate(TURN = replace(TURN, TURN < 0, NA)) %>%
-    mutate(RD = replace(RD, RD < 0, NA)) %>%
-    #filter(!is.na(NUTS_3)) %>%
+    distinct(IDNR, CLOSDATE_year, .keep_all = TRUE) %>% # remove duplicated rows
+    
+    # remove nonsensical values
+    mutate(EMPL = replace(EMPL, EMPL <= 0, NA),
+           TOAS = replace(TOAS, TOAS <= 0, NA),
+           STAF = replace(STAF, STAF < 0, NA),
+           TURN = replace(TURN, TURN < 0, NA)) %>% 
+    
     
     arrange(IDNR, CLOSDATE_year) %>% # arranging data by firm and year
     
-    mutate(NAICS_two_digit = substr(NAICS_CORE_CODE, 1, nchar(NAICS_CORE_CODE)-2)) %>% # changing naics code to two digit       
     
-    filter(NAICS_two_digit != 52) %>% #remove finanacial companies                  
-    left_join(def_pick, by = c("CLOSDATE_year")) %>% # joining with deflator file 
-    mutate(VA_imp = EBTA + STAF) %>% # imputed value added
-    mutate(LP_imp= VA_imp/EMPL) %>% # Imputed Labor Productivity
-    mutate(LP_imp_conv= LP_imp*EXCHRATE) %>% # Imputed Labor Productivity
-    mutate(LP_imp_conv_def= LP_imp_conv/deflator*100) %>% # Imputed Labor Productivity
-    mutate(CP_imp= VA_imp/TOAS) %>% # Imputed Capital Productivity using total Asset 
-    mutate(CP_imp_fix= VA_imp/FIAS) %>% # Imputed Capital Productivity using fixed Asset 
-    
-    mutate(PW_ratio = EBTA/STAF) %>% # profit-wage ratio 
-    mutate(WS = STAF/VA_imp) %>% # wage share
-    mutate(PS = EBTA/VA_imp) %>% # profit sahre
-    mutate(C_com = TOAS/STAF) %>% # composition of capital 
-    mutate(RoC = EBTA/TOAS) %>%  # profit rate using total asset
-    mutate(RoC_fix = EBTA/FIAS) %>%  # profit rate using fixed asset
-    
-    
-    mutate(RD_sales = RD/TURN) %>%
-    mutate(RD_va = RD/VA_imp) %>%
-    
-    
-    mutate(TURN_conv_def = TURN*EXCHRATE/deflator*100) %>% # 
-    
-    mutate(TOAS_conv_def = TOAS*EXCHRATE/deflator*100) %>% # 
-    mutate(CUAS_conv_def = CUAS*EXCHRATE/deflator*100) %>% #
-    mutate(FIAS_conv_def = FIAS*EXCHRATE/deflator*100) %>% #
-    mutate(IFAS_conv_def = IFAS*EXCHRATE/deflator*100) %>% #
-    mutate(TFAS_conv_def = TFAS*EXCHRATE/deflator*100) %>% #
-    mutate(OCAS_conv_def = OCAS*EXCHRATE/deflator*100) %>% #
-    mutate(OFAS_conv_def = OFAS*EXCHRATE/deflator*100) %>% #
-    
-    
-    group_by(IDNR) %>%
-    
-    mutate(EMPL_change = (EMPL - lag(EMPL,1))/lag(EMPL,1)) %>% # G_empl   
-    
-    mutate(C_com_change = (C_com - lag(C_com,1))/lag(C_com,1)) %>% #G_C_com
-    mutate(PW_ratio_change = (PW_ratio - lag(PW_ratio,1))/lag(PW_ratio,1)) %>% #
-    mutate(CP_change = (CP_imp - lag(CP_imp,1))/lag(CP_imp,1)) %>% # G_CP
-    mutate(LP_change = (LP_imp_conv_def - lag(LP_imp_conv_def,1))/lag(LP_imp_conv_def,1)) %>% # G_lp
-    
-    mutate(Zeta = CP_change * PS + LP_change * WS) %>%     
-    
-    
-    mutate(TOAS_change = (TOAS_conv_def - lag(TOAS_conv_def,1))/lag(TOAS_conv_def,1)) %>% # Total Asset Change
-    mutate(TURN_change = (TURN_conv_def - lag(TURN_conv_def,1))/lag(TURN_conv_def,1)) %>% # TURN
-    
-    
-  # there is not ZETA_lroc.
-  # Zeta is computed like so: Z = CP_1 * PS / CP_0 - PS + LP_1 * WS / LP_0 - WS = -PS-WS + CP_1/CP_0 + LP_1/LP_0 = -PS-WS + exp(CP_lroc) + exp(LP_lroc)
-  # The problem is, that shares cannot be nicely expressed in logarithms, i.e. you cannot express log(a+b) as a function of log(a) and log(b) [only of log(a) and log(1-b/a)].
-  # Therefore I am almost sure that this measure has no non-problematic lroc's equivalent. But let's try:
+   
+    mutate(VA = as.numeric(EBTA) + as.numeric(STAF), #Imputed Value added (EBTA is earning before depreciation)
+           VA_AD = as.numeric(EBIT) + as.numeric(STAF), #Imputed Value added (EBTA is earning before depreciation)
+           
+           LP= as.numeric(VA)/as.numeric(EMPL), # Labor productivity
+           CP = as.numeric(VA)/(as.numeric(FIAS)+as.numeric(DEPR)), # capital productivity with fixed asset
+           
+           LP_AD= as.numeric(VA_AD)/as.numeric(EMPL), # Labor productivity after depreciation
+           CP_AD = as.numeric(VA_AD)/as.numeric(FIAS), # capital productivity with fixed asset
+           
+           C_com = as.numeric(TOAS)/as.numeric(STAF), # capital intensity with total asset
+           C_com_FI = as.numeric(FIAS)/as.numeric(STAF), # capital intensity with fixed asset
+           
+           RoC_G = as.numeric(CF)/(as.numeric(TOAS)+as.numeric(DEPR)), # gross profit rate with interest, CF = cash flow (gross profit + depreciation)
+           RoC_G_FI = as.numeric(EBTA)/(as.numeric(FIAS)+as.numeric(DEPR)), # gross profit rate without interest 
+           
+           RoC_G_AD = as.numeric(PL)/as.numeric(TOAS), # gross profit rate with interest after depreciation
+           RoC_G_AD_FI = as.numeric(EBIT)/as.numeric(FIAS), # gross profit rate without interest after depreciation 
+           
+           RoC_N = as.numeric(PLAT)/as.numeric(TOAS), # net profit rate (after tax) 
+             
+           WS = as.numeric(STAF)/as.numeric(VA), # wage share
+           WS_AD = as.numeric(STAF)/as.numeric(VA_AD), # wage share after depreciation
+            
+           PW = as.numeric(EBTA)/as.numeric(STAF), # profit wage ratio
+           PW_AD = as.numeric(EBIT)/as.numeric(STAF) # profit wage ratio after depreciation
+           ) %>% 
   
+    
+    group_by(IDNR) %>% # group by firm index
+    
+    # firm size growth
+    mutate(EMPL_g = (as.numeric(EMPL) - 
+                       lag(as.numeric(EMPL),1))/lag(as.numeric(EMPL),1), 
+           FIAS_g = (as.numeric(FIAS) - 
+                       lag(as.numeric(FIAS),1))/lag(as.numeric(FIAS),1),
+           TOAS_g = (as.numeric(TOAS) - 
+                       lag(as.numeric(TOAS),1))/lag(as.numeric(TOAS),1),
+           SALE_g = (as.numeric(TURN) - 
+                       lag(as.numeric(TURN),1))/lag(as.numeric(TURN),1)
+           ) %>% 
+    
+    # productivity growth
+    
+    mutate(CP_g = (CP - lag(CP,1))/lag(CP,1),
+           CP_AD_g = (CP_AD - lag(CP_AD,1))/lag(CP_AD,1),
+           LP_g = (LP - lag(LP,1))/lag(LP,1),
+           LP_AD_g = (LP_AD - lag(LP_AD,1))/lag(LP_AD,1),
+           
+           Zeta = CP_g * (1-WS) + LP_g * WS,
+           Zeta_AD = CP_AD_g * (1-WS_AD) + LP_AD_g * WS_AD
+           ) %>% # G_CP
+    
+    # etc
+    
+    mutate(PW_g = (PW - lag(PW,1))/lag(PW,1)) %>% #
+    mutate(PW_AD_g = (PW_AD - lag(PW_AD,1))/lag(PW_AD,1)) #
+    
   return(data_c)
 }
 
-# reshape list of data frames with entries {IDNR, CLOSDATE_year, <dat_var>} to IDNR x CLOSDATE_year matrix with entries <dat_var>
-fun_Mat_gen <- function(dat_list, dat_var) {             
-  dat_var_table <- list()
-  for(i in 1:length(dat_list)){
-    ok <- dat_list[[i]]
-    setDT(ok)
-    dat_var_table[[i]] <- dcast(ok, IDNR ~ CLOSDATE_year, value.var = dat_var, fun.aggregate = mean)
-  }
-  return(dat_var_table)
-}
-
-# Balacned Panel for 10 years
-fun_gen_bp <- function(x){
-  ok <- x[,-c(1)]
-  zz <- rowSums(!is.na(ok))
-  ten_year <- x[which(zz == 10),]
-  
-  return(ten_year)                                                                 
-}
 
 # Country-wise master function. Reads data, calls function for cleaning and producing the balanced panels. Saves the panels
 fun_read_by_country <- function(filename_list, country_name_list, filename_nuts_list){             
-  #i <- 33
-  #filename_list <- filenames[[i]]
-  #country_name_list <- country_names[[i]]
-  #filename_nuts_list <- filenames_nuts[[i]]
   
   # 0. shape input lists as vector (This enables to deal with either single countries at a time or with lists or vectors of countries.)
   filename_list <- c(filename_list)
@@ -169,8 +114,12 @@ fun_read_by_country <- function(filename_list, country_name_list, filename_nuts_
   print(paste("         Commence reading data: ", fn))
   
   rfn = paste(fn, ".csv", sep="")
+  #rfn = paste(fn, ".Rda", sep="")
   
-  cdata <- fread(rfn, header=T)
+  cdata <- fread(rfn, header=T, stringsAsFactors = F)
+  
+  save(cdata, file = paste(fn, ".Rda", sep = ""))
+  #load(rfn)
   
   if (sum(country_name_list == c("Ireland", "Malta", "Poland", "Portugal", "Sweden"))==1){
     cdata$ZIPCODE <- cdata$ZIPCODE # as.integer, as.character, or none
@@ -180,11 +129,7 @@ fun_read_by_country <- function(filename_list, country_name_list, filename_nuts_
     cdata$ZIPCODE <- as.integer(cdata$ZIPCODE)
   }
   
-  
-  #cdata$ZIPCODE <- as.integer(cdata$ZIPCODE) # as.integer, as.character, or none
-  
   fn_nuts = filename_nuts_list
-  #fn_nuts = filenames_nuts[[2]]
   
   if (!is.na(fn_nuts)) {
     cdata_nuts <- read.csv(fn_nuts, header=T, sep=";", stringsAsFactors = F)
@@ -203,38 +148,22 @@ fun_read_by_country <- function(filename_list, country_name_list, filename_nuts_
   }
   
   # 2. compute firm age from CLOSDATE_year and DATEINC_char
-  #cdata$DATEINC_year <- as.numeric(substr(cdata$DATEINC_char, 7, 10))
   cdata$CLOSDATE_year <- as.numeric(cdata$CLOSDATE_year)
-  #DATEINC_errors <- cdata$DATEINC_year < 1400                             # no impossible incorporation dates before 1400
-  #cdata[DATEINC_errors]$DATEINC_year <- as.numeric(regmatches(cdata[DATEINC_errors]$DATEINC_char, gregexpr("\\d\\d\\d\\d+", cdata[DATEINC_errors]$DATEINC_char)))
   cdata$DATEINC_char <- as.character(cdata$DATEINC_char)
   cdata$DATEINC_year <- as.numeric(regmatches(cdata$DATEINC_char, gregexpr("\\d\\d\\d\\d+", cdata$DATEINC_char)))
   cdata[cdata$DATEINC_year > cdata$CLOSDATE_year]$DATEINC_year <- NA      # no negative firm ages
   cdata$Firm_Age <-  cdata$CLOSDATE_year - cdata$DATEINC_year
   
-  # This bit is not important for the country-wise handling of the data; only if lists larger than one are collected at the same time
   # 3. join to list called country_list; see below!
   country_list <- append(country_list, list(cdata))
   
-  
-  # 4. handle deflator 
-  deflator_d <- read.csv("deflator.csv", header = T, skip = 3, stringsAsFactors = F)
-  deflator_d$Country.Name[which(deflator_d$Country.Name == 'Slovak Republic')] = 'Slovakia'
-  
-  def_d <- deflator_d[deflator_d$Country.Name %in% c("United States"),]
-  #def_d <- deflator_d[deflator_d$Country.Name %in% c(country_names),]
-  
-  #rownames(def_d) <- c(country_names)
-  
-  def_d <- def_d[,c(c(ncol(def_d)-12):c(ncol(def_d)-3))]
-  def_d_list <- data.frame(CLOSDATE_year = c(2006:2015), deflator = as.numeric(def_d)) 
-  
-  # 5. clean data
+
+  # 4. clean data
   print("     Reading data complete ... commence cleaning")
   
-  country_list_c <- lapply(country_list, fun_data_clean, def_d, def_d_list)
+  country_list_c <- lapply(country_list, fun_data_clean)
   
-  # 6. put target variables in table form
+  # 5. put target variables in table form
   print("     Cleaning data complete ... commence preparing tables")
   
   ###### Table Form for variables 
@@ -244,30 +173,35 @@ fun_read_by_country <- function(filename_list, country_name_list, filename_nuts_
   attach(country_list_c[[1]])
   
   Cleaned_dat_INDEX <- data.frame(
-    IDNR = IDNR, Year = CLOSDATE_year, NUTS_1 = NUTS_1, NUTS_2 = NUTS_2, NUTS_3 = NUTS_3, NAICs_two_digit = NAICS_two_digit, NACE_PRIM_CODE =  NACE_PRIM_CODE, CONSOL = CONSOL, COMPCAT = COMPCAT, LSTATUS = LSTATUS, QUOTED = QUOTED, Firm_Age = Firm_Age, EXCHRATE = EXCHRATE, Deflator = deflator
+    IDNR = IDNR, Year = CLOSDATE_year, NUTS_1 = NUTS_1, NUTS_2 = NUTS_2,
+    NUTS_3 = NUTS_3,  NACE_PRIM_CODE =  NACE_PRIM_CODE, CONSOL = CONSOL, 
+    COMPCAT = COMPCAT, LSTATUS = LSTATUS, QUOTED = QUOTED, Firm_Age = Firm_Age, 
+    EXCHRATE = EXCHRATE
   )
   
   Cleaned_dat_Profitability <- data.frame(
-    IDNR = IDNR, Year = CLOSDATE_year, RoC = RoC, RoC_fix = RoC_fix, RoC_RCEM = RCEM, RoC_RTAS = RTAS
+    IDNR = IDNR, Year = CLOSDATE_year, RoC_G = RoC_G, RoC_G_FI = RoC_G_FI,
+    RoC_G_AD = RoC_G_AD, RoC_G_AD_FI = RoC_G_AD_FI, RoC_N = RoC_N,
+    RoC_RCEM = RCEM, RoC_RTAS = RTAS
   )
   
   Cleaned_dat_Productivity <- data.frame(
-    IDNR = IDNR, Year = CLOSDATE_year, LP = LP_imp_conv_def, CP = CP_imp, LP_change = LP_change, CP_change = CP_change, Zeta = Zeta
+    IDNR = IDNR, Year = CLOSDATE_year,  LP =  LP,  CP =  CP,  LP_AD = LP_AD, 
+    CP_AD = CP_AD, CP_g = CP_g, CP_AD_g = CP_AD_g, LP_g = LP_g, 
+    LP_AD_g = LP_AD_g, Zeta = Zeta, Zeta_AD = Zeta_AD
+    )
+  
+  Cleaned_dat_Cost_Structure <- data.frame(
+    IDNR = IDNR, Year = CLOSDATE_year,  WS = WS, WS_AD = WS_AD, PW = PW, 
+    PW_AD = PW_AD,  PW_g = PW_g,  PW_AD_g = PW_AD_g
+    )
+  
+  Cleaned_dat_Firm_Size <- data.frame(
+    IDNR = IDNR, Year = CLOSDATE_year, SALE = TURN, EMPL =  EMPL, 
+    TOAS = TOAS, FIAS = FIAS, VA = VA, EMPL_g = EMPL_g, FIAS_g = FIAS_g, TOAS_g = TOAS_g, 
+    SALE_g = SALE_g
   )
-  
-  Cleaned_dat_cost_structure <- data.frame(
-    IDNR = IDNR, Year = CLOSDATE_year, WS = WS, PS = PS, PW_ratio = PW_ratio, C_com = C_com, PW_ratio_change = PW_ratio_change
-  )
-  
-  Cleaned_dat_firm_size <- data.frame(
-    IDNR = IDNR, Year = CLOSDATE_year, SALE = as.numeric(TURN_conv_def), EMPL =  as.numeric(EMPL), TOAS = as.numeric(TOAS_conv_def), SALE_change = TURN_change, EMPL_change = EMPL_change,  VA = as.numeric(VA_imp)
-  )
-  
-  
-  Cleaned_dat_RD <- data.frame(
-    IDNR = IDNR, Year = CLOSDATE_year, RD = as.numeric(RD), SALE = as.numeric(TURN_conv_def), EMPL =  as.numeric(EMPL), TOAS = as.numeric(TOAS_conv_def), TOAS =  as.numeric(TOAS), CUAS =  as.numeric(CUAS), FIAS =  as.numeric(FIAS), IFAS =  as.numeric(IFAS), TFAS =  as.numeric(TFAS), OCAS =  as.numeric(OCAS), OFAS =  as.numeric(OFAS)
-  )
-  
+   
   
   # 8. save panels
   print("     Saving panels")    
@@ -275,9 +209,8 @@ fun_read_by_country <- function(filename_list, country_name_list, filename_nuts_
     Cleaned_dat_INDEX,
     Cleaned_dat_Profitability,
     Cleaned_dat_Productivity,
-    Cleaned_dat_cost_structure, 
-    Cleaned_dat_firm_size, 
-    Cleaned_dat_RD,
+    Cleaned_dat_Cost_Structure, 
+    Cleaned_dat_Firm_Size, 
     
     file=paste("panels_J!&", paste(unlist(country_name_list), collapse=""), ".Rda", sep="")  # either panels_ or consolidated_panels
   )
@@ -289,9 +222,41 @@ fun_read_by_country <- function(filename_list, country_name_list, filename_nuts_
 
 #####filenames
 # This is the full list of countries 
-country_names <- c('Albania', 'Austria', 'Belarus', 'Belgium', 'Bosnia and Herzegovina', 'Bulgaria', 'Croatia', 'Cyprus', 'Czech Republic', 'Denmark', 'Estonia', 'Finland', 'France', 'Germany', 'Greece', 'Hungary', 'Iceland', 'Ireland', 'Italy', 'Kosovo', 'Latvia', 'Liechtenstein', 'Lithuania', 'Luxembourg', 'Macedonia, FYR', 'Malta', 'Monaco', 'Montenegro', 'Netherlands', 'Norway', 'Poland', 'Portugal', 'Moldova', 'Romania', 'Russian Federation', 'Serbia', 'Slovakia', 'Slovenia', 'Spain', 'Sweden', 'Switzerland', 'Turkey', 'Ukraine', 'United Kingdom')
-filenames <- c('Albania', 'Austria', 'Belarus', 'Belgium', 'BOSNIA AND HERZEGOVINA', 'BULGARIA', 'CROATIA', 'CYPRUS', 'CZECH REPUBLIC', 'DENMARK', 'ESTONIA', 'FINLAND', 'France', 'GERMANY', 'GREECE', 'HUNGARY', 'ICELAND', 'IRELAND', 'ITALY', 'KOSOVO', 'LATVIA', 'LIECHTENSTEIN', 'LITHUANIA', 'LUXEMBOURG', 'MACEDONIA (FYROM)', 'MALTA', 'MONACO', 'MONTENEGRO', 'NETHERLANDS', 'NORWAY', 'POLAND', 'PORTUGAL', 'REPUBLIC OF MOLDOVA', 'ROMANIA', 'RUSSIAN FEDERATION', 'SERBIA', 'SLOVAKIA', 'SLOVENIA', 'SPAIN', 'SWEDEN', 'SWITZERLAND', 'TURKEY', 'UKRAINE', 'UNITED KINGDOM')
-filenames_nuts <- c('NUTS/pc2016_al_NUTS-2013_v2.3.csv','NUTS/pc2016_at_NUTS-2013_v2.3.csv', NA,'NUTS/pc2016_be_NUTS-2013_v2.3.csv', NA,'NUTS/pc2016_bg_NUTS-2013_v2.3.csv', 'NUTS/pc2016_hr_NUTS-2013_v2.3.csv', 'NUTS/pc2016_cy_NUTS-2013_v2.3.csv', 'NUTS/pc2016_cz_NUTS-2013_v2.3.csv', 'NUTS/pc2016_dk_NUTS-2013_v2.3.csv', 'NUTS/pc2016_ee_NUTS-2013_v2.3.csv', 'NUTS/pc2016_fi_NUTS-2013_v2.3.csv', 'NUTS/pc2016_fr_NUTS-2016_modified.csv', 'NUTS/pc2016_de_NUTS-2016_modified.csv', 'NUTS/pc2016_el_NUTS-2013_v2.3.csv', 'NUTS/pc2016_hu_NUTS-2013_v2.3.csv', 'NUTS/pc2016_is_NUTS-2013_v2.3.csv', 'NUTS/pc2016_ie_NUTS-2013_v2.3.csv', 'NUTS/pc2016_it_NUTS-2013_v2.3.csv', NA, 'NUTS/pc2016_lv_NUTS-2013_v2.3.csv', 'NUTS/pc2016_li_NUTS-2013_v2.3.csv', 'NUTS/pc2016_lt_NUTS-2013_v2.3.csv', 'NUTS/pc2016_lu_NUTS-2013_v2.3.csv', 'NUTS/pc2016_mk_NUTS-2013_v2.3.csv', 'NUTS/pc2016_mt_NUTS-2013_v2.3.csv', NA, 'NUTS/pc2016_me_NUTS-2013_v2.3.csv', 'NUTS/pc2016_nl_NUTS3-2013_v_2.5.csv', 'NUTS/pc2016_no_NUTS-2013_v2.3.csv', 'NUTS/pc2016_pl_NUTS-2013_v2.3.csv', 'NUTS/pc2016_pt_NUTS-2013_v2.3.csv', NA, 'NUTS/pc2016_ro_NUTS-2013_v2.3.csv', NA, 'NUTS/pc2018_rs_NUTS-2013_v2.3.csv', 'NUTS/pc2016_sk_NUTS-2013_v2.5.csv', 'NUTS/pc2016_si_NUTS-2013_v2.3.csv', 'NUTS/pc2016_es_NUTS-2013_v2.3.csv', 'NUTS/pc2016_se_NUTS-2013_v2.3.csv', 'NUTS/pc2016_ch_NUTS-2013_v2.4.csv', 'NUTS/pc2016_tr_NUTS-2013_v2.3.csv', NA, 'NUTS/pc2016_uk_NUTS-2013_v2.3_modified.csv')
+country_names <- c('Albania', 'Austria', 'Belarus', 'Belgium', 'Bosnia and Herzegovina', 
+                   'Bulgaria', 'Croatia', 'Cyprus', 'Czech Republic', 'Denmark', 'Estonia',
+                   'Finland', 'France', 'Germany', 'Greece', 'Hungary', 'Iceland', 
+                   'Ireland', 'Italy', 'Kosovo', 'Latvia', 'Liechtenstein', 'Lithuania',
+                   'Luxembourg', 'Macedonia, FYR', 'Malta', 'Monaco', 'Montenegro', 
+                   'Netherlands', 'Norway', 'Poland', 'Portugal', 'Moldova', 'Romania', 
+                   'Russian Federation', 'Serbia', 'Slovakia', 'Slovenia', 'Spain', 
+                   'Sweden', 'Switzerland', 'Turkey', 'Ukraine', 'United Kingdom')
+filenames <- c('Albania', 'Austria', 'Belarus', 'Belgium', 'BOSNIA AND HERZEGOVINA', 
+               'BULGARIA', 'CROATIA', 'CYPRUS', 'CZECH REPUBLIC', 'DENMARK', 'ESTONIA',
+               'FINLAND', 'France', 'GERMANY', 'GREECE', 'HUNGARY', 'ICELAND', 'IRELAND', 
+               'ITALY', 'KOSOVO', 'LATVIA', 'LIECHTENSTEIN', 'LITHUANIA', 'LUXEMBOURG',
+               'MACEDONIA (FYROM)', 'MALTA', 'MONACO', 'MONTENEGRO', 'NETHERLANDS', 
+               'NORWAY', 'POLAND', 'PORTUGAL', 'REPUBLIC OF MOLDOVA', 'ROMANIA', 
+               'RUSSIAN FEDERATION', 'SERBIA', 'SLOVAKIA', 'SLOVENIA', 'SPAIN', 'SWEDEN', 
+               'SWITZERLAND', 'TURKEY', 'UKRAINE', 'UNITED KINGDOM')
+filenames_nuts <- c('NUTS/pc2016_al_NUTS-2013_v2.3.csv','NUTS/pc2016_at_NUTS-2013_v2.3.csv',
+                    NA,'NUTS/pc2016_be_NUTS-2013_v2.3.csv', NA,'NUTS/pc2016_bg_NUTS-2013_v2.3.csv',
+                    'NUTS/pc2016_hr_NUTS-2013_v2.3.csv', 'NUTS/pc2016_cy_NUTS-2013_v2.3.csv', 
+                    'NUTS/pc2016_cz_NUTS-2013_v2.3.csv', 'NUTS/pc2016_dk_NUTS-2013_v2.3.csv', 
+                    'NUTS/pc2016_ee_NUTS-2013_v2.3.csv', 'NUTS/pc2016_fi_NUTS-2013_v2.3.csv',
+                    'NUTS/pc2016_fr_NUTS-2016_modified.csv', 'NUTS/pc2016_de_NUTS-2016_modified.csv',
+                    'NUTS/pc2016_el_NUTS-2013_v2.3.csv', 'NUTS/pc2016_hu_NUTS-2013_v2.3.csv', 
+                    'NUTS/pc2016_is_NUTS-2013_v2.3.csv', 'NUTS/pc2016_ie_NUTS-2013_v2.3.csv', 
+                    'NUTS/pc2016_it_NUTS-2013_v2.3.csv', NA, 'NUTS/pc2016_lv_NUTS-2013_v2.3.csv', 
+                    'NUTS/pc2016_li_NUTS-2013_v2.3.csv', 'NUTS/pc2016_lt_NUTS-2013_v2.3.csv', 
+                    'NUTS/pc2016_lu_NUTS-2013_v2.3.csv', 'NUTS/pc2016_mk_NUTS-2013_v2.3.csv', 
+                    'NUTS/pc2016_mt_NUTS-2013_v2.3.csv', NA, 'NUTS/pc2016_me_NUTS-2013_v2.3.csv', 
+                    'NUTS/pc2016_nl_NUTS3-2013_v_2.5.csv', 'NUTS/pc2016_no_NUTS-2013_v2.3.csv', 
+                    'NUTS/pc2016_pl_NUTS-2013_v2.3.csv', 'NUTS/pc2016_pt_NUTS-2013_v2.3.csv', NA, 
+                    'NUTS/pc2016_ro_NUTS-2013_v2.3.csv', NA, 'NUTS/pc2018_rs_NUTS-2013_v2.3.csv', 
+                    'NUTS/pc2016_sk_NUTS-2013_v2.5.csv', 'NUTS/pc2016_si_NUTS-2013_v2.3.csv', 
+                    'NUTS/pc2016_es_NUTS-2013_v2.3.csv', 'NUTS/pc2016_se_NUTS-2013_v2.3.csv', 
+                    'NUTS/pc2016_ch_NUTS-2013_v2.4.csv', 'NUTS/pc2016_tr_NUTS-2013_v2.3.csv', NA, 
+                    'NUTS/pc2016_uk_NUTS-2013_v2.3_modified.csv')
 
 ## Since computing all of them will be time- and memory consuming, we should normally use subsets, like so:
 #country_names <- country_names[c(1:3,5)]
@@ -318,10 +283,7 @@ filenames_nuts <- c('NUTS/pc2016_al_NUTS-2013_v2.3.csv','NUTS/pc2016_at_NUTS-201
 
 ## ------------------------------------------------------------------------
 
-#setwd("D:/Firm-Level Data/Amadeus")
-#setwd("~/eecon/datalakeX/Amadeus")
 
-#setwd("D:/Firm-Level Data/Amadeus")
 
 print("Commence reading and cleaning data...")
 
@@ -337,14 +299,3 @@ print("All complete")
 
 
 ## ------------------------------------------------------------------------
-##
-##
-
-
-#i <- match(c("United Kingdom"), country_names)
-#country_names[[i]]
-#fun_read_by_country(filenames[[i]], country_names[[i]], filenames_nuts[[i]])    
-##
-##
-##
-
