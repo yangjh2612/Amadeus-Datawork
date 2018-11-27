@@ -1,10 +1,6 @@
 # load libraries
-library("ggplot2")
-library("maptools")
-library("broom")
-library("rgdal")
-library("dplyr")
-library("rgeos")
+if (!'pacman' %in% installed.packages()[,'Package']) install.packages('pacman', repos='http://cran.r-project.org')
+pacman::p_load(ggplot2, maptools, broom, rgdal, dplyr, rgeos)
 #library("gpclib")
 
 # function to obtain the correct column name in the desc_stats data frame that holds the number of observations for a given variable
