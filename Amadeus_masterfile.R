@@ -11,10 +11,7 @@ library(dplyr)
 # Functions
 
 # Data cleaning function
-fun_data_clean <- function(dat, deflators){
-  
-  # prepare deflator frame
-  
+fun_data_clean <- function(dat){
   
   data_c <- dat %>%
     filter(!is.na(CLOSDATE_year)) %>% # year
@@ -98,11 +95,9 @@ fun_data_clean <- function(dat, deflators){
 # Country-wise master function. Reads data, calls function for cleaning and producing the balanced panels. Saves the panels
 fun_read_by_country <- function(filename, country_name, country_abbrv, filename_nuts){             
   
-  # 0. shape input lists as vector (This enables to deal with either single countries at a time or with lists or vectors of countries.)
-  country_list <- list()
   print(paste(unlist(country_name), collapse=" "))
   
-  # 1. Read data
+  # 1. Read firm data as csv/Rda
   
   print(paste("         Commence reading data: ", filename))
   
@@ -114,6 +109,8 @@ fun_read_by_country <- function(filename, country_name, country_abbrv, filename_
   save(cdata, file = paste(filename, ".Rda", sep = ""))
   #load(rfn)
   
+  # 2. Assign NUTS codes by matching ZIP codes to ZIP-NUTS correspondence files
+
   if (sum(country_name == c("Ireland", "Malta", "Poland", "Portugal", "Sweden"))==1){
     cdata$ZIPCODE <- cdata$ZIPCODE # as.integer, as.character, or none
   } else if(sum(country_name == c("United Kingdom"))==1){
@@ -138,41 +135,35 @@ fun_read_by_country <- function(filename, country_name, country_abbrv, filename_
     cdata$NUTS_1 <- NA
   }
 
-  # deflators
-  load("DEF_KLEMS_2017ii.Rda")  # reads DataFrame object all_p_ind with columns c("nace2", "def_cd", "ctry", "year", "p_ind_va", "p_ind_go", "p_ind_cp")
-  #all_p_ind[all_p_ind$nace2=="0100" & all_p_ind$ctry=="ES" & all_p_ind$year==1970,]
-  # select country in deflator data frame
-  all_p_ind <- all_p_ind[all_p_ind$ctry==country_abbrv,]
-  all_p_ind$ctry <- NULL
-  all_p_ind$def_cd <- NULL
-  all_p_ind$nace2 <- as.numeric(all_p_ind$nace2)
-    colnames(all_p_ind) <- c("NACE_PRIM_CODE", "CLOSDATE_year", "p_ind_va", "p_ind_go", "p_ind_cp")
-    cdata <- merge(cdata, all_p_ind, by=c("NACE_PRIM_CODE", "CLOSDATE_year"), all.x=TRUE)
+  # 3. Assign deflators by matching country, year, and NACE codes to industry level deflators from EUKLEMS
   
-  # 2. compute firm age from CLOSDATE_year and DATEINC_char
+  load("DEF_KLEMS_2017ii.Rda")  # reads DataFrame object all_p_ind with columns c("nace2", "def_cd", "ctry", "year", "p_ind_va", "p_ind_go", "p_ind_cp")
+  all_p_ind <- all_p_ind[all_p_ind$ctry==country_abbrv,]    # select country in deflator data frame
+  all_p_ind$ctry <- NULL                                    # remove unused variables
+  all_p_ind$def_cd <- NULL
+  all_p_ind$nace2 <- as.numeric(all_p_ind$nace2)            # change NACE code to numeric to match firm data file structure
+  colnames(all_p_ind) <- c("NACE_PRIM_CODE", "CLOSDATE_year", "p_ind_va", "p_ind_go", "p_ind_cp")   # replace colnames to match firm data file structure
+  cdata <- merge(cdata, all_p_ind, by=c("NACE_PRIM_CODE", "CLOSDATE_year"), all.x=TRUE)             # merge deflators into firm data frame (data.table, actually)
+  
+  # 4. compute firm age from CLOSDATE_year and DATEINC_char
   cdata$CLOSDATE_year <- as.numeric(cdata$CLOSDATE_year)
   cdata$DATEINC_char <- as.character(cdata$DATEINC_char)
   cdata$DATEINC_year <- as.numeric(regmatches(cdata$DATEINC_char, gregexpr("\\d\\d\\d\\d+", cdata$DATEINC_char)))
   cdata[cdata$DATEINC_year > cdata$CLOSDATE_year]$DATEINC_year <- NA      # no negative firm ages
   cdata$Firm_Age <-  cdata$CLOSDATE_year - cdata$DATEINC_year
   
-  # 3. join to list called country_list; see below!
-  country_list <- append(country_list, list(cdata))
-  
-
-  # 4. clean data
+  # 5. clean data
   print("     Reading data complete ... commence cleaning")
+  country_results <- fun_data_clean(cdata)
   
-  country_list_c <- lapply(country_list, fun_data_clean, all_p_ind)
-  
-  # 5. put target variables in table form
+  # 6. put target variables in table form
   print("     Cleaning data complete ... commence preparing tables")
   
   ###### Table Form for variables 
   
   # General Info
   
-  attach(country_list_c[[1]])
+  attach(country_results)
   
   Cleaned_dat_INDEX <- data.frame(
     IDNR = IDNR, Year = CLOSDATE_year, NUTS_1 = NUTS_1, NUTS_2 = NUTS_2,
@@ -204,8 +195,7 @@ fun_read_by_country <- function(filename, country_name, country_abbrv, filename_
     SALE_g = SALE_g
   )
    
-  
-  # 8. save panels
+  # 7. save panels
   print("     Saving panels")    
   save(
     Cleaned_dat_INDEX,
@@ -217,10 +207,12 @@ fun_read_by_country <- function(filename, country_name, country_abbrv, filename_
     file=paste("panels_J!&", paste(unlist(country_name), collapse=""), ".Rda", sep="")  # either panels_ or consolidated_panels
   )
   
-  detach(country_list_c[[1]])
+  detach(country_results)
 }
-# main entry point
 
+
+
+# main entry point
 
 #####filenames
 # This is the full list of countries 
@@ -267,28 +259,7 @@ filenames_nuts <- c('NUTS/pc2016_al_NUTS-2013_v2.3.csv','NUTS/pc2016_at_NUTS-201
 ## Since computing all of them will be time- and memory consuming, we should normally use subsets, like so:
 #country_names <- country_names[c(1:3,5)]
 #filenames <- filenames[c(1:3,5)]
-#filenames_nuts <- filenames_nuts[c(1:3,5)]
-#country_names <- country_names[c(1,3)]
-#filenames <- filenames[c(1,3)]
-#filenames_nuts <- filenames_nuts[c(1,3)]
-## Montenegro and Moldova:
-#country_names <- country_names[c(28,33)]
-#filenames <- filenames[c(28,33)]
-#filenames_nuts <- filenames_nuts[c(28,33)]
-## Serbia:
-#country_names <- country_names[c(36)]
-#filenames <- filenames[c(36)]
-#filenames_nuts <- filenames_nuts[c(36)]
-
-
-## Or you could have a few small countries handled together
-#country_names <- list('Belarus', 'Austria', list('Albania', 'Bosnia and Herzegovina', 'Montenegro', 'Kosovo', 'Macedonia, FYR'), 'Belgium', 'Bulgaria')
-#filenames <- list('Belarus', 'Austria', list('Albania', 'BOSNIA AND HERZEGOVINA',  'MONTENEGRO', 'KOSOVO', 'MACEDONIA (FYROM)'), 'Belgium', 'BULGARIA')
-#filenames_nuts <- list('NUTS/pc2016_be_NUTS-2013_v2.3.csv', 'NUTS/pc2016_at_NUTS-2013_v2.3.csv', list('NUTS/pc2016_al_NUTS-2013_v2.3.csv', NA, 'NUTS/pc2016_mk_NUTS-2013_v2.3.csv', NA, 'NUTS/pc2016_me_NUTS-2013_v2.3.csv'), NA, 'NUTS/pc2016_bg_NUTS-2013_v2.3.csv')
-
-
-## ------------------------------------------------------------------------
-
+# ...
 
 
 print("Commence reading and cleaning data...")
@@ -302,6 +273,3 @@ for (i in 1:length(filenames)) {
 
 print("All complete")
 
-
-
-## ------------------------------------------------------------------------
