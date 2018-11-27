@@ -317,8 +317,8 @@ country_names <- c('Albania', 'Austria', 'Belarus', 'Belgium', 'Bosnia and Herze
                    'Sweden', 'Switzerland', 'Turkey', 'Ukraine', 'United Kingdom')
 country_abbrv = c("AL", "AT", "BY", "BE", "BH", "BG", "HR", "CY", "CZ", "DK", "EE", "FI", 
                   "FR", "DE", "GR", "HU", "IS", "IE", "IT", "XK", "LV", "LI", "LT", "LU", 
-                  "MK", "MT", "MC", "ME", "NL", "NO", "PL", "PT", "RO", "RU", "RS", "SK", 
-                  "SI", "ES", "SE", "CH", "TK", "UA", "UK")
+                  "MK", "MT", "MC", "ME", "NL", "NO", "PL", "PT", "MD", "RO", "RU", "RS", 
+                  "SK", "SI", "ES", "SE", "CH", "TK", "UA", "UK")
 filenames <- c('Albania', 'Austria', 'Belarus', 'Belgium', 'BOSNIA AND HERZEGOVINA', 
                'BULGARIA', 'CROATIA', 'CYPRUS', 'CZECH REPUBLIC', 'DENMARK', 'ESTONIA',
                'FINLAND', 'France', 'GERMANY', 'GREECE', 'HUNGARY', 'ICELAND', 'IRELAND', 
