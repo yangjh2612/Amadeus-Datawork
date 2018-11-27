@@ -99,29 +99,19 @@ fun_data_clean <- function(dat, deflators){
 fun_read_by_country <- function(filename, country_name, country_abbrv, filename_nuts){             
   
   # 0. shape input lists as vector (This enables to deal with either single countries at a time or with lists or vectors of countries.)
-  #filename_list <- c(filename_list)
-  #country_name_list <- c(country_name_list)
-  #filename_nuts_list <- c(filename_nuts_list)
   country_list <- list()
   print(paste(unlist(country_name), collapse=" "))
-  #print(filename_list)
   
   # 1. Read data
   
-  fn = filename
-  #fn <- filenames[i]
-  #filename_list <- filenames[[i]] 
-  #country_name_list <- country_names[[i]]
-  #filename_nuts_list <- filenames_nuts[[i]]
+  print(paste("         Commence reading data: ", filename))
   
-  print(paste("         Commence reading data: ", fn))
+  csv_filename = paste(filename, ".csv", sep="")
+  #csv_filename = paste(filename, ".Rda", sep="")
   
-  rfn = paste(fn, ".csv", sep="")
-  #rfn = paste(fn, ".Rda", sep="")
+  cdata <- fread(csv_filename, header=T, stringsAsFactors = F)
   
-  cdata <- fread(rfn, header=T, stringsAsFactors = F)
-  
-  save(cdata, file = paste(fn, ".Rda", sep = ""))
+  save(cdata, file = paste(filename, ".Rda", sep = ""))
   #load(rfn)
   
   if (sum(country_name == c("Ireland", "Malta", "Poland", "Portugal", "Sweden"))==1){
@@ -131,8 +121,6 @@ fun_read_by_country <- function(filename, country_name, country_abbrv, filename_
   } else{
     cdata$ZIPCODE <- as.integer(cdata$ZIPCODE)
   }
-  
-  #fn_nuts = filename_nuts
   
   if (!is.na(filename_nuts)) {
     cdata_nuts <- read.csv(filename_nuts, header=T, sep=";", stringsAsFactors = F)
