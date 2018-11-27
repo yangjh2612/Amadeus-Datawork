@@ -96,23 +96,23 @@ fun_data_clean <- function(dat, deflators){
 
 
 # Country-wise master function. Reads data, calls function for cleaning and producing the balanced panels. Saves the panels
-fun_read_by_country <- function(filename_list, country_name_list, country_abbrv_list, filename_nuts_list){             
+fun_read_by_country <- function(filename, country_name, country_abbrv, filename_nuts){             
   
   # 0. shape input lists as vector (This enables to deal with either single countries at a time or with lists or vectors of countries.)
-  filename_list <- c(filename_list)
-  country_name_list <- c(country_name_list)
-  filename_nuts_list <- c(filename_nuts_list)
+  #filename_list <- c(filename_list)
+  #country_name_list <- c(country_name_list)
+  #filename_nuts_list <- c(filename_nuts_list)
   country_list <- list()
-  print(paste(unlist(country_name_list), collapse=" "))
+  print(paste(unlist(country_name), collapse=" "))
   #print(filename_list)
   
   # 1. Read data
   
-  fn = filename_list
+  fn = filename
   #fn <- filenames[i]
-  filename_list <- filenames[[i]] 
-  country_name_list <- country_names[[i]]
-  filename_nuts_list <- filenames_nuts[[i]]
+  #filename_list <- filenames[[i]] 
+  #country_name_list <- country_names[[i]]
+  #filename_nuts_list <- filenames_nuts[[i]]
   
   print(paste("         Commence reading data: ", fn))
   
@@ -124,18 +124,18 @@ fun_read_by_country <- function(filename_list, country_name_list, country_abbrv_
   save(cdata, file = paste(fn, ".Rda", sep = ""))
   #load(rfn)
   
-  if (sum(country_name_list == c("Ireland", "Malta", "Poland", "Portugal", "Sweden"))==1){
+  if (sum(country_name == c("Ireland", "Malta", "Poland", "Portugal", "Sweden"))==1){
     cdata$ZIPCODE <- cdata$ZIPCODE # as.integer, as.character, or none
-  } else if(sum(country_name_list == c("United Kingdom"))==1){
+  } else if(sum(country_name == c("United Kingdom"))==1){
     cdata$ZIPCODE <- as.character(cdata$ZIPCODE)
   } else{
     cdata$ZIPCODE <- as.integer(cdata$ZIPCODE)
   }
   
-  fn_nuts = filename_nuts_list
+  #fn_nuts = filename_nuts
   
-  if (!is.na(fn_nuts)) {
-    cdata_nuts <- read.csv(fn_nuts, header=T, sep=";", stringsAsFactors = F)
+  if (!is.na(filename_nuts)) {
+    cdata_nuts <- read.csv(filename_nuts, header=T, sep=";", stringsAsFactors = F)
     #join nuts into data, 
     # ZIP code to NUTS code mapping files are available for most countries from #http://ec.europa.eu/eurostat/tercet/flatfiles.do
     #                                     for Albania, I created one since the mapping is straightforward
@@ -154,21 +154,12 @@ fun_read_by_country <- function(filename_list, country_name_list, country_abbrv_
   load("DEF_KLEMS_2017ii.Rda")  # reads DataFrame object all_p_ind with columns c("nace2", "def_cd", "ctry", "year", "p_ind_va", "p_ind_go", "p_ind_cp")
   #all_p_ind[all_p_ind$nace2=="0100" & all_p_ind$ctry=="ES" & all_p_ind$year==1970,]
   # select country in deflator data frame
-  all_p_ind <- all_p_ind[all_p_ind$ctry==country_abbrv_list,]
+  all_p_ind <- all_p_ind[all_p_ind$ctry==country_abbrv,]
   all_p_ind$ctry <- NULL
   all_p_ind$def_cd <- NULL
   all_p_ind$nace2 <- as.numeric(all_p_ind$nace2)
-  browser()
-  #if (nrow(all_p_ind) > 0) {
     colnames(all_p_ind) <- c("NACE_PRIM_CODE", "CLOSDATE_year", "p_ind_va", "p_ind_go", "p_ind_cp")
     cdata <- merge(cdata, all_p_ind, by=c("NACE_PRIM_CODE", "CLOSDATE_year"), all.x=TRUE)
-    browser()
-  #} else {
-  #  # cdata[c("p_ind_va", "p_ind_go", "p_ind_cp")] <- NA    # does not work because cdata is a data.table object, so we do it one by one:
-  #  cdata$p_ind_va <- NA
-  #  cdata$p_ind_go <- NA
-  #  cdata$p_ind_cp <- NA
-  #}
   
   # 2. compute firm age from CLOSDATE_year and DATEINC_char
   cdata$CLOSDATE_year <- as.numeric(cdata$CLOSDATE_year)
@@ -235,7 +226,7 @@ fun_read_by_country <- function(filename_list, country_name_list, country_abbrv_
     Cleaned_dat_Cost_Structure, 
     Cleaned_dat_Firm_Size, 
     
-    file=paste("panels_J!&", paste(unlist(country_name_list), collapse=""), ".Rda", sep="")  # either panels_ or consolidated_panels
+    file=paste("panels_J!&", paste(unlist(country_name), collapse=""), ".Rda", sep="")  # either panels_ or consolidated_panels
   )
   
   detach(country_list_c[[1]])
