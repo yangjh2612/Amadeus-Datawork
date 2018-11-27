@@ -29,7 +29,20 @@ fun_data_clean <- function(dat){
     
     arrange(IDNR, CLOSDATE_year) %>% # arranging data by firm and year
     
-    
+    # deflate variables
+    mutate(def_RCEM = as.numeric(RCEM) / p_ind_va,  # returns
+           def_RTAS = as.numeric(RTAS) / p_ind_va,
+           def_EBTA = as.numeric(EBTA) / p_ind_va,  # earnings
+           def_EBIT = as.numeric(EBIT) / p_ind_va,
+           def_PL   = as.numeric(PL)   / p_ind_va,  # profits
+           def_PLAT = as.numeric(PLAT) / p_ind_va,
+           def_CF   = as.numeric(CF)   / p_ind_va,  # cash flow
+           def_STAF = as.numeric(STAF) / p_ind_va,  # wages
+           def_DEPR = as.numeric(DEPR) / p_ind_va,  # depreciation
+           def_TOAS = as.numeric(TOAS) / p_ind_cp,  # assets
+           def_FIAS = as.numeric(FIAS) / p_ind_cp,
+           def_TURN = as.numeric(TURN) / p_ind_go   #sales
+    ) %>%
    
     mutate(VA = as.numeric(EBTA) + as.numeric(STAF), #Imputed Value added (EBTA is earning before depreciation)
            VA_AD = as.numeric(EBIT) + as.numeric(STAF), #Imputed Value added (EBTA is earning before depreciation)
@@ -55,7 +68,31 @@ fun_data_clean <- function(dat){
            WS_AD = as.numeric(STAF)/as.numeric(VA_AD), # wage share after depreciation
             
            PW = as.numeric(EBTA)/as.numeric(STAF), # profit wage ratio
-           PW_AD = as.numeric(EBIT)/as.numeric(STAF) # profit wage ratio after depreciation
+           PW_AD = as.numeric(EBIT)/as.numeric(STAF), # profit wage ratio after depreciation
+           
+           # And the same variables again deflated
+           #  ...except for WS and PW as these are dimensionless and would be deflated with the same deflators
+           
+           def_VA = as.numeric(def_EBTA) + as.numeric(def_STAF), #Imputed Value added (EBTA is earning before depreciation)
+           def_VA_AD = as.numeric(def_EBIT) + as.numeric(def_STAF), #Imputed Value added (EBTA is earning before depreciation)
+           
+           def_LP= as.numeric(def_VA)/as.numeric(EMPL), # Labor productivity
+           def_CP = as.numeric(def_VA)/(as.numeric(def_FIAS)+as.numeric(def_DEPR)), # capital productivity with fixed asset
+           
+           def_LP_AD= as.numeric(def_VA_AD)/as.numeric(EMPL), # Labor productivity after depreciation
+           def_CP_AD = as.numeric(def_VA_AD)/as.numeric(def_FIAS), # capital productivity with fixed asset
+           
+           def_C_com = as.numeric(def_TOAS)/as.numeric(def_STAF), # capital intensity with total asset
+           def_C_com_FI = as.numeric(def_FIAS)/as.numeric(def_STAF), # capital intensity with fixed asset
+           
+           def_RoC_G = as.numeric(def_CF)/(as.numeric(def_TOAS)+as.numeric(def_DEPR)), # gross profit rate with interest, CF = cash flow (gross profit + depreciation)
+           def_RoC_G_FI = as.numeric(def_EBTA)/(as.numeric(def_FIAS)+as.numeric(def_DEPR)), # gross profit rate without interest 
+           
+           def_RoC_G_AD = as.numeric(def_PL)/as.numeric(def_TOAS), # gross profit rate with interest after depreciation
+           def_RoC_G_AD_FI = as.numeric(def_EBIT)/as.numeric(def_FIAS), # gross profit rate without interest after depreciation 
+           
+           def_RoC_N = as.numeric(def_PLAT)/as.numeric(def_TOAS) # net profit rate (after tax) 
+             
            ) %>% 
   
     
@@ -63,24 +100,42 @@ fun_data_clean <- function(dat){
     
     # firm size growth
     mutate(EMPL_g = (as.numeric(EMPL) - 
-                       lag(as.numeric(EMPL),1))/lag(as.numeric(EMPL),1), 
+                       lag(as.numeric(EMPL),1))/lag(as.numeric(EMPL),1),    # wrt employment 
            FIAS_g = (as.numeric(FIAS) - 
-                       lag(as.numeric(FIAS),1))/lag(as.numeric(FIAS),1),
+                       lag(as.numeric(FIAS),1))/lag(as.numeric(FIAS),1),    # wrt fixed assets
            TOAS_g = (as.numeric(TOAS) - 
-                       lag(as.numeric(TOAS),1))/lag(as.numeric(TOAS),1),
+                       lag(as.numeric(TOAS),1))/lag(as.numeric(TOAS),1),    # wrt total assets
            SALE_g = (as.numeric(TURN) - 
-                       lag(as.numeric(TURN),1))/lag(as.numeric(TURN),1)
+                       lag(as.numeric(TURN),1))/lag(as.numeric(TURN),1),    # wrt sales
+           
+           # And the same variables again defalated
+           
+           def_FIAS_g = (as.numeric(def_FIAS) - 
+                       lag(as.numeric(def_FIAS),1))/lag(as.numeric(def_FIAS),1),    # wrt fixed assets
+           def_TOAS_g = (as.numeric(def_TOAS) - 
+                       lag(as.numeric(def_TOAS),1))/lag(as.numeric(def_TOAS),1),    # wrt total assets
+           def_SALE_g = (as.numeric(def_TURN) - 
+                       lag(as.numeric(def_TURN),1))/lag(as.numeric(def_TURN),1)    # wrt sales
            ) %>% 
     
     # productivity growth
     
     mutate(CP_g = (CP - lag(CP,1))/lag(CP,1),
-           CP_AD_g = (CP_AD - lag(CP_AD,1))/lag(CP_AD,1),
+           CP_AD_g = (CP_AD - lag(CP_AD,1))/lag(CP_AD,1),                   # capital productivity undeflated
            LP_g = (LP - lag(LP,1))/lag(LP,1),
-           LP_AD_g = (LP_AD - lag(LP_AD,1))/lag(LP_AD,1),
+           LP_AD_g = (LP_AD - lag(LP_AD,1))/lag(LP_AD,1),                   # labor productivity undeflated
+           
+           def_CP_g = (def_CP - lag(def_CP,1))/lag(def_CP,1),
+           def_CP_AD_g = (def_CP_AD - lag(def_CP_AD,1))/lag(def_CP_AD,1),   # capital productivity deflated
+           def_LP_g = (def_LP - lag(def_LP,1))/lag(def_LP,1),
+           def_LP_AD_g = (def_LP_AD - lag(def_LP_AD,1))/lag(def_LP_AD,1),   # labor productivity deflated
            
            Zeta = CP_g * (1-WS) + LP_g * WS,
-           Zeta_AD = CP_AD_g * (1-WS_AD) + LP_AD_g * WS_AD
+           Zeta_AD = CP_AD_g * (1-WS_AD) + LP_AD_g * WS_AD,                 # TFP undeflated
+           cpdef_Zeta = def_CP_g * (1-WS) + LP_g * WS,
+           cpdef_Zeta_AD = def_CP_AD_g * (1-WS_AD) + LP_AD_g * WS_AD,       # TFP with only capital productivity deflated (labor productivity undeflated)
+           def_Zeta = def_CP_g * (1-WS) + def_LP_g * WS,
+           def_Zeta_AD = def_CP_AD_g * (1-WS_AD) + def_LP_AD_g * WS_AD      # TFP deflated (both capital and labor productivity)
            ) %>% # G_CP
     
     # etc
@@ -177,6 +232,12 @@ fun_read_by_country <- function(filename, country_name, country_abbrv, filename_
     RoC_G_AD = RoC_G_AD, RoC_G_AD_FI = RoC_G_AD_FI, RoC_N = RoC_N,
     RoC_RCEM = RCEM, RoC_RTAS = RTAS
   )
+
+  Cleaned_dat_Profitability_Deflated <- data.frame(
+    IDNR = IDNR, Year = CLOSDATE_year, RoC_G = def_RoC_G, RoC_G_FI = def_RoC_G_FI,
+    RoC_G_AD = def_RoC_G_AD, RoC_G_AD_FI = def_RoC_G_AD_FI, RoC_N = def_RoC_N,
+    RoC_RCEM = def_RCEM, RoC_RTAS = def_RTAS
+  )
   
   Cleaned_dat_Productivity <- data.frame(
     IDNR = IDNR, Year = CLOSDATE_year,  LP =  LP,  CP =  CP,  LP_AD = LP_AD, 
@@ -184,19 +245,49 @@ fun_read_by_country <- function(filename, country_name, country_abbrv, filename_
     LP_AD_g = LP_AD_g, Zeta = Zeta, Zeta_AD = Zeta_AD
     )
   
+  Cleaned_dat_Productivity_Deflated <- data.frame(
+    IDNR = IDNR, Year = CLOSDATE_year, LP = def_LP, CP =  def_CP, LP_AD = def_LP_AD, 
+    CP_AD = def_CP_AD, CP_g = def_CP_g, CP_AD_g = def_CP_AD_g, LP_g = def_LP_g, 
+    LP_AD_g = def_LP_AD_g, Zeta = def_Zeta, Zeta_AD = def_Zeta_AD, cpdef_Zeta = cpdef_Zeta, 
+    cpdef_Zeta_AD = cpdef_Zeta_AD
+    )
+
   Cleaned_dat_Cost_Structure <- data.frame(
     IDNR = IDNR, Year = CLOSDATE_year,  WS = WS, WS_AD = WS_AD, PW = PW, 
     PW_AD = PW_AD,  PW_g = PW_g,  PW_AD_g = PW_AD_g
     )
-  
+
   Cleaned_dat_Firm_Size <- data.frame(
     IDNR = IDNR, Year = CLOSDATE_year, SALE = TURN, EMPL =  EMPL, 
     TOAS = TOAS, FIAS = FIAS, VA = VA, EMPL_g = EMPL_g, FIAS_g = FIAS_g, TOAS_g = TOAS_g, 
     SALE_g = SALE_g
   )
+
+  Cleaned_dat_Firm_Size_Deflated <- data.frame(
+    IDNR = IDNR, Year = CLOSDATE_year, SALE = def_TURN, EMPL = EMPL, 
+    TOAS = def_TOAS, FIAS = def_FIAS, VA = def_VA, EMPL_g = EMPL_g, FIAS_g = def_FIAS_g, 
+    TOAS_g = def_TOAS_g, SALE_g = def_SALE_g
+  )
    
   # 7. save panels
+  # save undeflated series
   print("     Saving panels")    
+  save(
+    Cleaned_dat_INDEX,
+    Cleaned_dat_Profitability,
+    Cleaned_dat_Productivity,
+    Cleaned_dat_Cost_Structure, 
+    Cleaned_dat_Firm_Size, 
+    
+    file=paste("panels_Undeflated_J!&", paste(unlist(country_name), collapse=""), ".Rda", sep="")  # either panels_ or consolidated_panels
+  )
+
+  # overwrite variables for saving of deflated series
+  Cleaned_dat_Profitability <- Cleaned_dat_Profitability_Deflated
+  Cleaned_dat_Productivity <- Cleaned_dat_Productivity_Deflated
+  Cleaned_dat_Firm_Size <- Cleaned_dat_Firm_Size_Deflated
+  
+  # save deflated series
   save(
     Cleaned_dat_INDEX,
     Cleaned_dat_Profitability,
