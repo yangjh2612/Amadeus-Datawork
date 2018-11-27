@@ -132,8 +132,8 @@ fun_data_clean <- function(dat){
            
            Zeta = CP_g * (1-WS) + LP_g * WS,
            Zeta_AD = CP_AD_g * (1-WS_AD) + LP_AD_g * WS_AD,                 # TFP undeflated
-           cpdef_Zeta = def_CP_g * (1-WS) + LP_g * WS,
-           cpdef_Zeta_AD = def_CP_AD_g * (1-WS_AD) + LP_AD_g * WS_AD,       # TFP with only capital productivity deflated (labor productivity undeflated)
+           lpdef_Zeta = CP_g * (1-WS) + def_LP_g * WS,
+           lpdef_Zeta_AD = CP_AD_g * (1-WS_AD) + def_LP_AD_g * WS_AD,       # TFP with only capital productivity deflated (labor productivity undeflated)
            def_Zeta = def_CP_g * (1-WS) + def_LP_g * WS,
            def_Zeta_AD = def_CP_AD_g * (1-WS_AD) + def_LP_AD_g * WS_AD      # TFP deflated (both capital and labor productivity)
            ) %>% # G_CP
@@ -197,6 +197,7 @@ fun_read_by_country <- function(filename, country_name, country_abbrv, filename_
   all_p_ind$ctry <- NULL                                    # remove unused variables
   all_p_ind$def_cd <- NULL
   all_p_ind$nace2 <- as.numeric(all_p_ind$nace2)            # change NACE code to numeric to match firm data file structure
+  all_p_ind<-transform(all_p_ind, p_ind_va=p_ind_va/100., p_ind_go=p_ind_go/100., p_ind_cp=p_ind_cp/100.)
   colnames(all_p_ind) <- c("NACE_PRIM_CODE", "CLOSDATE_year", "p_ind_va", "p_ind_go", "p_ind_cp")   # replace colnames to match firm data file structure
   cdata <- merge(cdata, all_p_ind, by=c("NACE_PRIM_CODE", "CLOSDATE_year"), all.x=TRUE)             # merge deflators into firm data frame (data.table, actually)
   
@@ -248,10 +249,11 @@ fun_read_by_country <- function(filename, country_name, country_abbrv, filename_
   Cleaned_dat_Productivity_Deflated <- data.frame(
     IDNR = IDNR, Year = CLOSDATE_year, LP = def_LP, CP =  def_CP, LP_AD = def_LP_AD, 
     CP_AD = def_CP_AD, CP_g = def_CP_g, CP_AD_g = def_CP_AD_g, LP_g = def_LP_g, 
-    LP_AD_g = def_LP_AD_g, Zeta = def_Zeta, Zeta_AD = def_Zeta_AD, cpdef_Zeta = cpdef_Zeta, 
-    cpdef_Zeta_AD = cpdef_Zeta_AD
+    LP_AD_g = def_LP_AD_g, Zeta = def_Zeta, Zeta_AD = def_Zeta_AD, lpdef_Zeta = lpdef_Zeta, 
+    lpdef_Zeta_AD = lpdef_Zeta_AD
     )
-
+  browser()
+  
   Cleaned_dat_Cost_Structure <- data.frame(
     IDNR = IDNR, Year = CLOSDATE_year,  WS = WS, WS_AD = WS_AD, PW = PW, 
     PW_AD = PW_AD,  PW_g = PW_g,  PW_AD_g = PW_AD_g
