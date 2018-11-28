@@ -1,3 +1,11 @@
+# TODO: Organize script more understandably
+# TODO: Make input data use more flexible (not just by country, but by any group of firms)
+# TODO: Use more understandable function names
+
+if (!'pacman' %in% installed.packages()[,'Package']) install.packages('pacman', repos='http://cran.r-project.org')
+pacman::p_load(boot)
+# TODO: Collect all other libraries into the pacman loader command
+
 ## ------------------------------------------------------------------------
 
 load("All_list_for_prod.Rda")
@@ -64,6 +72,30 @@ soofi_gen <- function(pred_m, obs_m){
 }  
 
 
+wrapper_Sub_fun_LM <- function(dat) {
+    res <- Sub_fun_LM(dat)
+    return(res$para)
+}
+
+wrapper_nonparametric_Sub_fun_LM <- function(dat, indices) {
+    dat2 <- dat[indices]
+    res <- Sub_fun_LM(dat2)
+    return(res$para)
+}
+
+get_stabledist_variates <- function(dat, est_levy_qt) {
+    variates <- stabledist::rstable(n=length(dat), alpha=est_levy_qt[[1]], 
+                        beta=est_levy_qt[[2]], gamma=est_levy_qt[[3]], 
+                        delta=est_levy_qt[[4]])
+    return(variates)
+}
+
+wrapper_nonparametric_Levy_fun_QT <- function(dat, indices) {
+    dat2 <- dat[indices]
+    res <- Levy_fun_QT(dat2)
+    return(res)
+}
+
 ## ------------------------------------------------------------------------
 # Levy and Sub info generation
 fun_info_gen <- function(dat_t, bin_num){
@@ -73,6 +105,27 @@ p_data <- dat_t
 # estimation result
 est_levy_qt <-  Levy_fun_QT(p_data)
 est_sub_lm  <- Sub_fun_LM(p_data)
+browser()
+
+# bootstrap of standard errors
+
+# TODO: Use more than 10 or 100 replications for the bootstrap; R=1000 for all four cases would be recommended.
+# Note: computing these may take a long time, so this should not be done unconditionally (therefore I have lower 
+#       numbers of replications in here for now)
+#       For levy stable, it is reasonably fast; for asymmetric subbotin, this it takes very long
+
+## parametric bootstraps
+est_levy_qt_std_error <- boot(p_data, wrapper_nonparametric_Levy_fun_QT, R=100, sim="ordinary", parallel="multicore", ncpus=3)
+## Note: if this does not work on windows, try with snow instead of multicore
+#est_levy_qt_std_error <- boot(p_data, wrapper_nonparametric_Levy_fun_QT, R=100, sim="ordinary", parallel="snow", ncpus=3)
+## ... if this does also not work, try without parallelization. This will take multiple times longer.
+#est_levy_qt_std_error <- boot(p_data, wrapper_nonparametric_Levy_fun_QT, R=100, sim="ordinary")
+
+est_sub_lm_std_error <- boot(p_data, wrapper_nonparametric_Sub_fun_LM, R=10, sim="ordinary", parallel="multicore", ncpus=3)
+## non parametric bootstraps
+est_levy_qt_np_std_error <- boot(p_data, Levy_fun_QT, R=100, sim="parametric", ran.gen=get_stabledist_variates, mle=est_levy_qt, parallel="multicore", ncpus=3)
+est_sub_lm_np_std_error <- boot(p_data, wrapper_Sub_fun_LM, R=10, sim="parametric", ran.gen=rlmomco, mle=est_sub_lm, parallel="multicore", ncpus=3)
+
 
 p_data_h <- hist(p_data, plot = F, breaks = seq(min(p_data),max(p_data),l= bin_num))
 
@@ -98,7 +151,8 @@ levy_aic <- 2*4 - sum(dstable(p_data, est_levy_qt[1], est_levy_qt[2], est_levy_q
 sub_aic <- 2*4 - sum(log(pdfaep4(obs_mid, est_sub_lm)))
 
 
-ok_list <- list(raw_data = p_data, data_mid = obs_mid, data_p = obs_p, levy_q = pred_p_levy, sub_q = pred_p_sub, levy_para = est_levy_qt, sub_info = est_sub_lm, sub_para = est_sub_lm[[2]], levy_soofi = round(levy_soofi,4)*100, sub_soofi = round(sub_soofi,4)*100, levy_aid = round(levy_aic,0), soofi_aic = round(sub_aic,0))
+ok_list <- list(raw_data = p_data, data_mid = obs_mid, data_p = obs_p, levy_q = pred_p_levy, sub_q = pred_p_sub, levy_para = est_levy_qt, sub_info = est_sub_lm, sub_para = est_sub_lm[[2]], levy_soofi = round(levy_soofi,4)*100, sub_soofi = round(sub_soofi,4)*100, levy_aid = round(levy_aic,0), soofi_aic = round(sub_aic,0), 
+                est_levy_qt_std_error = est_levy_qt_std_error, est_sub_lm_std_error = est_sub_lm_std_error, est_levy_qt_np_std_error = est_levy_qt_np_std_error, est_sub_lm_np_std_error = est_sub_lm_np_std_error)
 
 return(ok_list)
 
@@ -107,38 +161,39 @@ return(ok_list)
 
 ## ------------------------------------------------------------------------
 ### Fitting function
-fun_fit <- function(dat, bin_num, var_num, cut_ind_quan, cut_neg, cut_pov){
+fun_fit <- function(dat, bin_num, var_name, cut_ind_quan, cut_neg, cut_pov){
 
 result_list <- list()
 # looping for country
 for(k in 1:length(dat)){
   print(k)
-  y_ind <- which(names(dat) == "Year")
+  y_ind <- which(names(dat[[k]]) == "Year")
+  var_num <- match(var_name, colnames(dat[[k]]))
   ok <- dat[[k]][,c(y_ind,var_num)]
   names(ok) <- c("Year", "Var")
-  
+  ok <- na.omit(ok)
 # looping for year  
   y_list <- list()
   for(y in 1:length(unique(ok$Year))){
-     print(paste("y = ", y))
-    
-    ok <- na.omit(ok)
-    # cut_ind_quan == 1 means cutting by quantile, otherwise cut by absolute cutoff number
-    if(cut_ind_quan == 1){
-       ok_y <- subset(ok, Year == sort(unique(ok$Year))[y] & Var > quantile(Var, cut_neg) & Var < quantile(Var, cut_pov))
-    }else{
-       ok_y <- subset(ok, Year == sort(unique(ok$Year))[y] & Var > cut_neg & Var < cut_pov)
-    }
-    
-    # The sample size should be larger than 2000
-    if(nrow(ok_y) < 2000){
-      y_list[[y]] <- NA
-    } else{
-      
-    ok_y_2 <- ok_y$Var
-    
-    y_list[[y]] <- fun_info_gen(dat_t = ok_y_2, bin_num = bin_num)
- 
+    if (y>0) {
+        print(paste("y = ", y))
+        
+        # cut_ind_quan == 1 means cutting by quantile, otherwise cut by absolute cutoff number
+        if(cut_ind_quan == 1){
+           ok_y <- subset(ok, Year == sort(unique(ok$Year))[y] & Var > quantile(Var, cut_neg) & Var < quantile(Var, cut_pov))
+        }else{
+           ok_y <- subset(ok, Year == sort(unique(ok$Year))[y] & Var > cut_neg & Var < cut_pov)
+        }
+        
+        # The sample size should be larger than 2000
+        if(nrow(ok_y) < 2000){
+          y_list[[y]] <- NA
+        } else{
+          
+        ok_y_2 <- ok_y$Var
+        
+        y_list[[y]] <- fun_info_gen(dat_t = ok_y_2, bin_num = bin_num)
+        }
     }
    
   }
@@ -154,25 +209,25 @@ return(result_list)
 
 # LP change
 
-LP_change_list <- fun_fit(dat = All_list_for_prod, bin_num = 100, var_num = 5, cut_ind_quan = 1, cut_neg = 0.025, cut_pov = 0.975)
+LP_change_list <- fun_fit(dat = All_list_for_prod, bin_num = 100, var_name = "LP_change", cut_ind_quan = 1, cut_neg = 0.025, cut_pov = 0.975)
 
 save(LP_change_list , file = "LP_change_list.Rda")
 
 # CP change
 
-CP_change_list <- fun_fit(dat = All_list_for_prod, bin_num = 100, var_num = 5, cut_ind_quan = 1, cut_neg = 0.025, cut_pov = 0.975)
+CP_change_list <- fun_fit(dat = All_list_for_prod, bin_num = 100, var_name = "CP_change", cut_ind_quan = 1, cut_neg = 0.025, cut_pov = 0.975)
 
 save(CP_change_list , file = "CP_change_list.Rda")
 
 # zeta
 
-Zeta_list <- fun_fit(dat = All_list_for_prod, bin_num = 100, var_num = 5, cut_ind_quan = 1, cut_neg = 0.025, cut_pov = 0.975)
+Zeta_list <- fun_fit(dat = All_list_for_prod, bin_num = 100, var_name = "Zeta", cut_ind_quan = 1, cut_neg = 0.025, cut_pov = 0.975)
 
 
 save(Zeta_list , file = "Zeta_list.Rda")
 
 
-## ------------------------------------------------------------------------
-library(knitr)
-purl("Prod_Fitting.Rmd")  
+### ------------------------------------------------------------------------
+#library(knitr)
+#purl("Prod_Fitting.Rmd")  
 
