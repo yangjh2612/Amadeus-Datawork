@@ -3,6 +3,7 @@
 ############ 0. Basic Set up ############ 
 ## loading of required libraries
 library(colorspace)
+library(RColorBrewer)
 library(msir)
 
 ############ 1. Plot the distribution with the Levy fitted lines ############ 
