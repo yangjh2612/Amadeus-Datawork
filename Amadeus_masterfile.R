@@ -252,7 +252,7 @@ fun_read_by_country <- function(filename, country_name, country_abbrv, filename_
     LP_AD_g = def_LP_AD_g, Zeta = def_Zeta, Zeta_AD = def_Zeta_AD, lpdef_Zeta = lpdef_Zeta, 
     lpdef_Zeta_AD = lpdef_Zeta_AD
     )
-  browser()
+  #browser()
   
   Cleaned_dat_Cost_Structure <- data.frame(
     IDNR = IDNR, Year = CLOSDATE_year,  WS = WS, WS_AD = WS_AD, PW = PW, 
