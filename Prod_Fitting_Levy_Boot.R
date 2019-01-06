@@ -2,8 +2,14 @@
 
 ############ 0. Basic Set up ############
 ## 0.1. loading of required libraries
+
+if (!'pacman' %in% installed.packages()[,'Package']) install.packages('pacman', repos='http://cran.r-project.org')
+pacman::p_load(boot)
+
+library(boot)
 library(dplyr)
 library(StableEstim) # main package for the estimation of the Levy stable distributon
+
 
 ##  0.2. loading of required data and cleaning
 load("All_list_Cleaned.Rda") ## load the data file created from "Productivity_Analysis_Data.Rmd"
@@ -43,6 +49,8 @@ rm(All_list_Cleaned)
 
 ## 0.3. Setting the class names: Year, Size, Industry,
 # industry index
+
+year_names <- c(2006:2015) 
 
 ind_name_table <- data.frame(ind_names = unique(All_list_Cleaned_cut[[15]]$NACE_CAT), 
                              ind_names_alphabet = c("J", "L", "G", "C", "I", "H", "S", "P", "M", "K", "B", "N", "A", "Q", "R", "F", "E", "O", "D", "T"))
@@ -90,15 +98,39 @@ soofi_gen <- function(pred_m, obs_m) {
 }
 
 
+get_stabledist_variates <- function(dat, est_levy_qt) {
+  variates <- stabledist::rstable(n=length(dat), alpha=est_levy_qt[[1]], 
+                                  beta=est_levy_qt[[2]], gamma=est_levy_qt[[3]], 
+                                  delta=est_levy_qt[[4]])
+  return(variates)
+}
+
+wrapper_nonparametric_Levy_fun_QT <- function(dat, indices) {
+  dat2 <- dat[indices]
+  res <- Levy_fun_QT(dat2)
+  return(res)
+}
+
+
 # Fittig function for the levy
 fun_info_gen <- function(dat_t, bin_num) { # two arguments: 1) data and 2) the bin number
   p_data <- dat_t
   est_levy_qt <- Levy_fun_QT(p_data) # Levy estimation with QT
   #est_levy_gmm <- Levy_fun_GMM(p_data)
   
+  # bootstrapping
+  est_levy_qt_std_error <- boot(p_data, wrapper_nonparametric_Levy_fun_QT, R=1000, sim="ordinary", parallel="multicore", ncpus=3)
+  ## Note: if this does not work on windows, try with snow instead of multicore
+  #est_levy_qt_std_error <- boot(p_data, wrapper_nonparametric_Levy_fun_QT, R=100, sim="ordinary", parallel="snow", ncpus=3)
+  ## ... if this does also not work, try without parallelization. This will take multiple times longer.
+  #est_levy_qt_std_error <- boot(p_data, wrapper_nonparametric_Levy_fun_QT, R=100, sim="ordinary")
+  
+  #est_levy_qt_np_std_error <- boot(p_data, Levy_fun_QT, R=1000, sim="parametric", ran.gen=get_stabledist_variates, mle=est_levy_qt, parallel="multicore", ncpus=3)
+  
 
   p_data_h <- hist(p_data, plot = F, breaks = seq(min(p_data), max(p_data), l = bin_num)) # binning the data
 
+  
   obs_mid <- p_data_h$mids # location of the bin
   obs_p <- p_data_h$counts / sum(p_data_h$counts) # normalized counts of the bin: the normalized empirical density
 
@@ -111,7 +143,7 @@ fun_info_gen <- function(dat_t, bin_num) { # two arguments: 1) data and 2) the b
   levy_soofi <- 1 - soofi_gen(obs_p, pred_p_levy) # soofi index
 
 
-  ok_list <- list(raw_data = p_data, data_mid = obs_mid, data_p = obs_p, levy_q = pred_p_levy, levy_para = est_levy_qt, levy_soofi = round(levy_soofi, 4) * 100)
+  ok_list <- list(levy_para = est_levy_qt, levy_soofi = round(levy_soofi, 4) * 100, est_levy_qt_std_error = est_levy_qt_std_error)
   #ok_list <- list(raw_data = p_data, data_mid = obs_mid, data_p = obs_p, levy_q = pred_p_levy, levy_para = est_levy_gmm, levy_soofi = round(levy_soofi, 4) * 100)
   
   return(ok_list)
@@ -149,7 +181,7 @@ fun_fit_levy <- function(dat, bin_num, cond_ind, var_ind, c_names, cut_num, neg_
       filter(length(IDNR) > cut_num) # set the minimum number of obs for each class
 
 
-    #I have the names/numerical indicator of all classes by year, size, and industry. Go to the section 0.3 to see the unique factor by three different categorization of firms. 
+
     if (nrow(zz) == 0) {
       result_list[[k]] <- NA
     } else {
@@ -202,37 +234,42 @@ pov_cut <- 0.9975 # positive cut-off point
 
 ## Year class
 # LP conditional on year (year class)
-LP_year_Levy_list <- fun_fit_levy(dat = All_list_Cleaned_cut, bin_num = 100, cond_ind = 2, var_ind = 5, c_names = year_names, cut_num = 0, neg_cut = neg_cut, pov_cut = pov_cut)
+LP_year_Levy_list_boot <- fun_fit_levy(dat = All_list_Cleaned_cut, bin_num = 100, cond_ind = 2, var_ind = 5, c_names = year_names, cut_num = 0, neg_cut = neg_cut, pov_cut = pov_cut)
 
 # LP_change conditional on year
-LP_g_year_Levy_list <- fun_fit_levy(dat = All_list_Cleaned_cut, bin_num = 100, cond_ind = 2, var_ind = 6, c_names = year_names, cut_num = 0, neg_cut = neg_cut, pov_cut = pov_cut)
+LP_g_year_Levy_list_boot <- fun_fit_levy(dat = All_list_Cleaned_cut, bin_num = 100, cond_ind = 2, var_ind = 6, c_names = year_names, cut_num = 0, neg_cut = neg_cut, pov_cut = pov_cut)
 
 # Zeta  conditional on year
-Zeta_g_year_Levy_list <- fun_fit_levy(dat = All_list_Cleaned_cut, bin_num = 100, cond_ind = 2, var_ind = 7, c_names = year_names, cut_num = 0, neg_cut = neg_cut, pov_cut = pov_cut)
+Zeta_g_year_Levy_list_boot <- fun_fit_levy(dat = All_list_Cleaned_cut, bin_num = 100, cond_ind = 2, var_ind = 7, c_names = year_names, cut_num = 0, neg_cut = neg_cut, pov_cut = pov_cut)
 
-
+setwd("~/Desktop/Cleaned Rda/Productivity")
+save(LP_year_Levy_list_boot, LP_g_year_Levy_list_boot, Zeta_g_year_Levy_list_boot, file = "Year_Levy_list_boot.Rda")
 ## Size class
 # LP conditional on size
-LP_size_Levy_list <- fun_fit_levy(dat = All_list_Cleaned_cut, bin_num = 100, cond_ind = 3, var_ind = 5, c_names = size_names, cut_num = 5000, neg_cut = neg_cut, pov_cut = pov_cut)
+LP_size_Levy_list_boot <- fun_fit_levy(dat = All_list_Cleaned_cut, bin_num = 100, cond_ind = 3, var_ind = 5, c_names = size_names, cut_num = 5000, neg_cut = neg_cut, pov_cut = pov_cut)
 
 # LP_change conditional on size
-LP_g_size_Levy_list <- fun_fit_levy(dat = All_list_Cleaned_cut, bin_num = 100, cond_ind = 3, var_ind = 6, c_names = size_names, cut_num = 5000, neg_cut = neg_cut, pov_cut = pov_cut)
+LP_g_size_Levy_list_boot <- fun_fit_levy(dat = All_list_Cleaned_cut, bin_num = 100, cond_ind = 3, var_ind = 6, c_names = size_names, cut_num = 5000, neg_cut = neg_cut, pov_cut = pov_cut)
 
 # Zeta  conditional on size
-Zeta_g_size_Levy_list <- fun_fit_levy(dat = All_list_Cleaned_cut, bin_num = 100, cond_ind = 3, var_ind = 7, c_names = size_names, cut_num = 5000, neg_cut = neg_cut, pov_cut = pov_cut)
+Zeta_g_size_Levy_list_boot <- fun_fit_levy(dat = All_list_Cleaned_cut, bin_num = 100, cond_ind = 3, var_ind = 7, c_names = size_names, cut_num = 5000, neg_cut = neg_cut, pov_cut = pov_cut)
 
+save(LP_size_Levy_list_boot, LP_g_size_Levy_list_boot, Zeta_g_size_Levy_list_boot, file = "Size_Levy_list_boot.Rda")
 
 ## Industry class
 # LP conditional on sector
-LP_ind_Levy_list <- fun_fit_levy(dat = All_list_Cleaned_cut, bin_num = 100, cond_ind = 4, var_ind = 5, c_names = ind_name_table$ind_names, cut_num = 1000, neg_cut = neg_cut, pov_cut = pov_cut)
+LP_ind_Levy_list_boot <- fun_fit_levy(dat = All_list_Cleaned_cut, bin_num = 100, cond_ind = 4, var_ind = 5, c_names = ind_name_table$ind_names, cut_num = 1000, neg_cut = neg_cut, pov_cut = pov_cut)
 
 # LP_change conditional on sector
-LP_g_ind_Levy_list <- fun_fit_levy(dat = All_list_Cleaned_cut, bin_num = 100, cond_ind = 4, var_ind = 6, c_names = ind_name_table$ind_names, cut_num = 1000, neg_cut = neg_cut, pov_cut = pov_cut)
+LP_g_ind_Levy_list_boot <- fun_fit_levy(dat = All_list_Cleaned_cut, bin_num = 100, cond_ind = 4, var_ind = 6, c_names = ind_name_table$ind_names, cut_num = 1000, neg_cut = neg_cut, pov_cut = pov_cut)
 
 # Zeta conditional on sector
-Zeta_g_ind_Levy_list <- fun_fit_levy(dat = All_list_Cleaned_cut, bin_num = 100, cond_ind = 4, var_ind = 7, c_names = ind_name_table$ind_names, cut_num = 1000, neg_cut = neg_cut, pov_cut = pov_cut)
+Zeta_g_ind_Levy_list_boot <- fun_fit_levy(dat = All_list_Cleaned_cut, bin_num = 100, cond_ind = 4, var_ind = 7, c_names = ind_name_table$ind_names, cut_num = 1000, neg_cut = neg_cut, pov_cut = pov_cut)
 
-
+save(LP_ind_Levy_list_boot, LP_g_ind_Levy_list_boot, Zeta_g_ind_Levy_list_boot, file = "Industry_Levy_list_boot.Rda")
 ### Save the result
 # setwd("~/Desktop/Cleaned Rda/Productivity")
 # save(LP_year_Levy_list, LP_g_year_Levy_list, Zeta_g_year_Levy_list, LP_size_Levy_list, LP_g_size_Levy_list, Zeta_g_size_Levy_list, LP_ind_Levy_list, LP_g_ind_Levy_list, Zeta_g_ind_Levy_list, file = "Levy_list.Rda")
+
+
+############ 2. Summary Statistics  ############

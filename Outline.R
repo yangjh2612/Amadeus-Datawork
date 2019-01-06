@@ -41,9 +41,14 @@ rm(All_list_Cleaned)
 
 ## 0.3 Setting the class names: Year, Size, Industry, 
 
-year_names <- c(2006:2015) # yaer index
-ind_names <- unique(All_list_Cleaned_cut[[15]]$NACE_CAT) # industry index
-names(ind_names) <- 1:length(ind_names) # create the numerical name for the industry index
+# yaer index
+year_names <- c(2006:2015) 
+
+# industry index
+ind_name_table <- data.frame(ind_names = unique(All_list_Cleaned_cut[[15]]$NACE_CAT), 
+                             ind_names_alphabet = c("J", "L", "G", "C", "I", "H", "S", "P", "M", "K", "B", "N", "A", "Q", "R", "F", "E", "O", "D", "T"))
+
+ind_name_table <- ind_name_table[order(ind_name_table$ind_names_alphabet),]
 
 size_names <- c("S", "M", "L", "V") # size index
 names(size_names) <- 1:4 # create the numerical name for the size index
@@ -158,7 +163,7 @@ fun_plot_diag <- function(pdf_name, title, dat, var_num, var_ind) { # this funct
     legend("center", legend = leg, lty = rep(1, 5), lwd = 2, col = color_this, bty = "n", cex = 1)
   } else { # for industry proportion
     color_this <- c("grey", "blue", "green", "red", brewer.pal(n = 8, name = "Dark2"), brewer.pal(n = 8, name = "Set3")) # 20 colors for each industry type
-    leg <- names(ind_names) # the numeric index for industry type
+    leg <- ind_name_table$ind_names_alphabet # the alphabetical index for industry type
 
     plot(c(1:1), c(1:1), yaxt = "n", xaxt = "n", main = "", cex.main = 1.2, xlab = "", ylab = "", lty = "blank", pch = 20, cex = .0, bty = "n") # empty plot
 
@@ -189,7 +194,7 @@ fun_plot_diag <- function(pdf_name, title, dat, var_num, var_ind) { # this funct
 
       for (y in 1:c(ncol(ok) - 2)) { # the number of types is the number of the data frame - 2 (the year column and the total obs column)
 
-        uni_ind <- which(ind_names %in% names(ok)[c(y + 1)]) # for the consistency in coloring
+        uni_ind <- which(ind_name_table$ind_names %in% names(ok)[c(y + 1)]) # for the consistency in coloring
 
         lines(ok$Year, ok[[c(y + 1)]], cex = 0.5, col = color_this[uni_ind], lwd = 1.5)
       }
@@ -209,10 +214,10 @@ diag_size_ind <- fun_diagnostic_1(All_list_Cleaned_cut)
 ## 2.3 generate plots using the data "diag_size_ind"
 
 # plot for size proportion
-fun_plot_diag(pdf_name = "Figure_Size_Proportion", title = "Size Proportion by Country", diag_size_ind, var_num = 1, var_ind = "size") # var_num = 1 means size variable
+fun_plot_diag(pdf_name = "Figure_Size_Proportion", title = "Size Proportion by Country", dat = diag_size_ind, var_num = 1, var_ind = "size") # var_num = 1 means size variable
 
 # plot for industry proportion
-fun_plot_diag(pdf_name = "Figure_Ind_Proportion", title = "Size Proportion by Industry", diag_size_ind, var_num = 2, var_ind = "ind") # var_num = 1s means industry variable
+fun_plot_diag(pdf_name = "Figure_Ind_Proportion", title = "Size Proportion by Industry", dat = diag_size_ind, var_num = 2, var_ind = "ind") # var_num = 1s means industry variable
 
 # detach("package:tidyr", unload=TRUE)
 
@@ -276,19 +281,22 @@ fun_plot_marginal <- function(pdf_name, title, cond_ind, var_ind, x_lab, c_names
 
     c_uni_name <- c()
     c_uni_num <- c() 
-
-    if (is.numeric(c_uni)) {
-      c_uni_num <- sort(c_uni)
-      c_uni_name <- c_uni_num
-    } else {
-      for (i in 1:length(c_uni)) {
-        c_uni_num[i] <- which(c_names %in% c_uni[i])
-      }
-      c_uni_num <- sort(c_uni_num)
-      c_uni_name <- c_names[c_uni_num]
+    c_uni_name_2 <- c()
+    
+    for (i in 1:length(c_uni)) {
+      c_uni_num[i] <- which(c_names %in% c_uni[i])
+    }
+    
+    c_uni_num <- sort(c_uni_num)
+    c_uni_name <- c_names[c_uni_num]
+    
+    if(cond_ind == 4){
+      c_uni_name_2 <- ind_name_table$ind_names_alphabet[c_uni_num]
+    } else{
+      c_uni_name_2 <- c_uni_name
     }
 
-    color_ind <- c(brewer.pal(n = 8, name = "Dark2"), brewer.pal(n = 8, name = "Set3"), "grey", "blue", "green", "red")[1:length(c_names)] # color index 
+     color_ind <- c(brewer.pal(n = 8, name = "Dark2"), brewer.pal(n = 8, name = "Set3"), "grey", "blue", "green", "red")[1:length(c_names)] # color index 
 
     plot(c(x_min, x_max), c(y_min, y_max), cex = 0, log = "y", yaxt = "n", xaxt = "n", cex.main = 1.2, xlab = x_lab, ylab = "Log-Density", main = country_names_five[k]) # empty plot 
     axis(side = 1, lwd = 0.3, cex.axis = 0.9)
@@ -305,7 +313,7 @@ fun_plot_marginal <- function(pdf_name, title, cond_ind, var_ind, x_lab, c_names
       c_ind_all[c] <- c_ind
     }
 
-    legend("topright", legend = c_uni_num, pch = c_ind_all, col = color_ind[c_ind_all], bty = "n", xpd = NA, cex = .8, ncol = n_col)
+    legend("topright", legend = c_uni_name_2, pch = c_ind_all, col = color_ind[c_ind_all], bty = "n", xpd = NA, cex = .8, ncol = n_col)
   }
   mtext(paste(title), side = 3, line = 1, outer = TRUE, cex = 1.1)
   dev.off()
@@ -340,11 +348,11 @@ fun_plot_marginal(pdf_name = "Figure_Country_Size_TFP_Growth", title = "Log Dens
 
 # cross-sectional plots of LP and LP\_change (country-industry)
 
-fun_plot_marginal(pdf_name = "Figure_Country_Industry_LP", title = "Log Density of Labor Productivty", cond_ind = 4, var_ind = 5, x_lab = "LP", c_names = ind_names, neg_cut = neg_cut, pov_cut = pov_cut, cut_num = 2000, n_col = 3)
+fun_plot_marginal(pdf_name = "Figure_Country_Industry_LP", title = "Log Density of Labor Productivty", cond_ind = 4, var_ind = 5, x_lab = "LP", c_names = ind_name_table$ind_names, neg_cut = neg_cut, pov_cut = pov_cut, cut_num = 1000, n_col = 3)
 
-fun_plot_marginal(pdf_name = "Figure_Country_Industry_LP_Growth", title = "Log Density of Labor Productivty Growth", cond_ind = 4, var_ind = 6, x_lab = "LP Growth(%)", c_names = ind_names, neg_cut = neg_cut, pov_cut = pov_cut, cut_num = 2000, n_col = 3)
+fun_plot_marginal(pdf_name = "Figure_Country_Industry_LP_Growth", title = "Log Density of Labor Productivty Growth", cond_ind = 4, var_ind = 6, x_lab = "LP Growth(%)", c_names = ind_name_table$ind_names, neg_cut = neg_cut, pov_cut = pov_cut, cut_num = 1000, n_col = 3)
 
-fun_plot_marginal(pdf_name = "Figure_Country_Industry_TFP_Growth", title = "Log Density of TFP Growth", cond_ind = 4, var_ind = 7, x_lab = "TFP Growth(%)", c_names = ind_names, neg_cut = neg_cut, pov_cut = pov_cut, cut_num = 2000, n_col = 3)
+fun_plot_marginal(pdf_name = "Figure_Country_Industry_TFP_Growth", title = "Log Density of TFP Growth", cond_ind = 4, var_ind = 7, x_lab = "TFP Growth(%)", c_names =  ind_name_table$ind_names, neg_cut = neg_cut, pov_cut = pov_cut, cut_num = 1000, n_col = 3)
 
 
 ############ 4. the distribution of the right tail part ############
@@ -394,16 +402,20 @@ fun_plot_marginal_tail <- function(pdf_name, title, cond_ind, var_ind, x_lab, c_
     c_uni <- unique(dd$Cond)
 
     c_uni_name <- c()
-    c_uni_num <- c()
-    if (is.numeric(c_uni)) {
-      c_uni_num <- sort(c_uni)
-      c_uni_name <- c_uni_num
-    } else {
-      for (i in 1:length(c_uni)) {
-        c_uni_num[i] <- which(c_names %in% c_uni[i])
-      }
-      c_uni_num <- sort(c_uni_num)
-      c_uni_name <- c_names[c_uni_num]
+    c_uni_num <- c() 
+    c_uni_name_2 <- c()
+    
+    for (i in 1:length(c_uni)) {
+      c_uni_num[i] <- which(c_names %in% c_uni[i])
+    }
+    
+    c_uni_num <- sort(c_uni_num)
+    c_uni_name <- c_names[c_uni_num]
+    
+    if(cond_ind == 4){
+      c_uni_name_2 <- ind_name_table$ind_names_alphabet[c_uni_num]
+    } else{
+      c_uni_name_2 <- c_uni_name
     }
 
     color_ind <- c(brewer.pal(n = 8, name = "Dark2"), brewer.pal(n = 8, name = "Set3"), "grey", "blue", "green", "red")[1:length(c_names)]
@@ -427,7 +439,7 @@ fun_plot_marginal_tail <- function(pdf_name, title, cond_ind, var_ind, x_lab, c_
       c_ind_all[c] <- c_ind
     }
 
-    legend(leg_pos, legend = c_uni_num, pch = c_ind_all, col = color_ind[c_ind_all], bty = "n", xpd = NA, cex = .8, ncol = n_col)
+    legend(leg_pos, legend = c_uni_name_2, pch = c_ind_all, col = color_ind[c_ind_all], bty = "n", xpd = NA, cex = .8, ncol = n_col)
   }
   mtext(paste(title), side = 3, line = 1, outer = TRUE, cex = 1.)
   dev.off()
@@ -451,11 +463,11 @@ fun_plot_marginal_tail(pdf_name = "Figure_Country_Size_LP_Growth_pov_tail", titl
 fun_plot_marginal_tail(pdf_name = "Figure_Country_Size_TFP_Growth_pov_tail", title = "Right Tail of Log Density of TFP Growth", cond_ind = 3, var_ind = 7, x_lab = "log(TFP Growth)", c_names = size_names, leg_pos = "bottomleft", cut_tail = 0.9, neg_cut = neg_cut, pov_cut = pov_cut, cut_num = 5000, n_col = 1)
 
 # cross-sectional plots of LP and LP\_change (country-industry)
-fun_plot_marginal_tail(pdf_name = "Figure_Country_Industry_LP_pov_tail", title = "Right Tail of Log Density of Labor Productivty", cond_ind = 4, var_ind = 5, x_lab = "log(LP)", c_names = ind_names, leg_pos = "bottomleft", cut_tail = 0.9, neg_cut = neg_cut, pov_cut = pov_cut, cut_num = 2000, n_col = 3)
+fun_plot_marginal_tail(pdf_name = "Figure_Country_Industry_LP_pov_tail", title = "Right Tail of Log Density of Labor Productivty", cond_ind = 4, var_ind = 5, x_lab = "log(LP)", c_names = ind_name_table$ind_names, leg_pos = "bottomleft", cut_tail = 0.9, neg_cut = neg_cut, pov_cut = pov_cut, cut_num = 1000, n_col = 3)
 
-fun_plot_marginal_tail(pdf_name = "Figure_Country_Industry_LP_Growth_pov_tail", title = "Right Tail of Log Density of Labor Productivty Growth", cond_ind = 4, var_ind = 6, x_lab = "log(LP Growth)", c_names = ind_names, leg_pos = "bottomleft", cut_tail = 0.9, neg_cut = neg_cut, pov_cut = pov_cut, cut_num = 2000, n_col = 3)
+fun_plot_marginal_tail(pdf_name = "Figure_Country_Industry_LP_Growth_pov_tail", title = "Right Tail of Log Density of Labor Productivty Growth", cond_ind = 4, var_ind = 6, x_lab = "log(LP Growth)", c_names = ind_name_table$ind_names, leg_pos = "bottomleft", cut_tail = 0.9, neg_cut = neg_cut, pov_cut = pov_cut, cut_num = 1000, n_col = 3)
 
-fun_plot_marginal_tail(pdf_name = "Figure_Country_Industry_TFP_Growth_pov_tail", title = "Right Tail of Log Density of TFP Growth", cond_ind = 4, var_ind = 7, x_lab = "log(TFP Growth)", c_names = ind_names, leg_pos = "bottomleft", cut_tail = 0.9, neg_cut = neg_cut, pov_cut = pov_cut, cut_num = 2000, n_col = 3)
+fun_plot_marginal_tail(pdf_name = "Figure_Country_Industry_TFP_Growth_pov_tail", title = "Right Tail of Log Density of TFP Growth", cond_ind = 4, var_ind = 7, x_lab = "log(TFP Growth)", c_names = ind_name_table$ind_names, leg_pos = "bottomleft", cut_tail = 0.9, neg_cut = neg_cut, pov_cut = pov_cut, cut_num = 1000, n_col = 3)
 
 
 ############ 5. the distribution of the right tail part ############
@@ -508,20 +520,23 @@ fun_plot_marginal_tail_neg <- function(pdf_name, title, cond_ind, var_ind, x_lab
 
 
     c_uni <- unique(dd$Cond)
-
+    
     c_uni_name <- c()
-    c_uni_num <- c()
-    if (is.numeric(c_uni)) {
-      c_uni_num <- sort(c_uni)
-      c_uni_name <- c_uni_num
-    } else {
-      for (i in 1:length(c_uni)) {
-        c_uni_num[i] <- which(c_names %in% c_uni[i])
-      }
-      c_uni_num <- sort(c_uni_num)
-      c_uni_name <- c_names[c_uni_num]
+    c_uni_num <- c() 
+    c_uni_name_2 <- c()
+    
+    for (i in 1:length(c_uni)) {
+      c_uni_num[i] <- which(c_names %in% c_uni[i])
     }
-
+    
+    c_uni_num <- sort(c_uni_num)
+    c_uni_name <- c_names[c_uni_num]
+    
+    if(cond_ind == 4){
+      c_uni_name_2 <- ind_name_table$ind_names_alphabet[c_uni_num]
+    } else{
+      c_uni_name_2 <- c_uni_name
+    }
     color_ind <- c(brewer.pal(n = 8, name = "Dark2"), brewer.pal(n = 8, name = "Set3"), "grey", "blue", "green", "red")[1:length(c_names)]
 
 
@@ -534,7 +549,7 @@ fun_plot_marginal_tail_neg <- function(pdf_name, title, cond_ind, var_ind, x_lab
     for (c in 1:length(c_uni_name)) {
       c_lp <- dd$Var[dd$Cond == c_uni_name[c]]
       c_lp <- c_lp[c_lp < quantile(c_lp, cut_tail)]
-      c_lp <- c_lp - min(c_lp)
+      c_lp <- c_lp - min(c_lp) 
       c_lp <- c_lp[c_lp > 0]
 
       c_hist <- hist(log(c_lp), breaks = seq(min(log(c_lp)), max(log(c_lp)), l = 50 + 1), plot = F)
@@ -544,7 +559,7 @@ fun_plot_marginal_tail_neg <- function(pdf_name, title, cond_ind, var_ind, x_lab
       c_ind_all[c] <- c_ind
     }
 
-    legend(leg_pos, legend = c_uni_num, pch = c_ind_all, col = color_ind[c_ind_all], bty = "n", xpd = NA, cex = .8, ncol = n_col)
+    legend(leg_pos, legend = c_uni_name_2, pch = c_ind_all, col = color_ind[c_ind_all], bty = "n", xpd = NA, cex = .8, ncol = n_col)
   }
   mtext(paste(title), side = 3, line = 1, outer = TRUE, cex = 1.)
   dev.off()
@@ -567,8 +582,8 @@ fun_plot_marginal_tail_neg(pdf_name = "Figure_Country_Size_LP_Growth_neg_tail", 
 fun_plot_marginal_tail_neg(pdf_name = "Figure_Country_Size_TFP_Growth_neg_tail", title = "Left Tail of Log Density of TFP Growth", cond_ind = 3, var_ind = 7, x_lab = "log(TFP Growth)", c_names = size_names, leg_pos = "topleft", cut_tail = 0.1, neg_cut = neg_cut, pov_cut = pov_cut, cut_num = 5000, n_col = 1)
 
 # cross-sectional plots of LP and LP\_change (country-industry)
-fun_plot_marginal_tail_neg(pdf_name = "Figure_Country_Industry_LP_neg_tail", title = "Left Tail of Log Density of Labor Productivty", cond_ind = 4, var_ind = 5, x_lab = "log(LP)", c_names = ind_names, leg_pos = "topleft", cut_tail = 0.1, neg_cut = neg_cut, pov_cut = pov_cut, cut_num = 2000, n_col = 3)
+fun_plot_marginal_tail_neg(pdf_name = "Figure_Country_Industry_LP_neg_tail", title = "Left Tail of Log Density of Labor Productivty", cond_ind = 4, var_ind = 5, x_lab = "log(LP)", c_names = ind_name_table$ind_names, leg_pos = "topleft", cut_tail = 0.1, neg_cut = neg_cut, pov_cut = pov_cut, cut_num = 1000, n_col = 3)
 
-fun_plot_marginal_tail_neg(pdf_name = "Figure_Country_Industry_LP_Growth_neg_tail", title = "Left Tail of Log Density of Labor Productivty Growth", cond_ind = 4, var_ind = 6, x_lab = "log(LP Growth)", c_names = ind_names, leg_pos = "topleft", cut_tail = 0.1, neg_cut = neg_cut, pov_cut = pov_cut, cut_num = 2000, n_col = 3)
+fun_plot_marginal_tail_neg(pdf_name = "Figure_Country_Industry_LP_Growth_neg_tail", title = "Left Tail of Log Density of Labor Productivty Growth", cond_ind = 4, var_ind = 6, x_lab = "log(LP Growth)", c_names = ind_name_table$ind_names, leg_pos = "topleft", cut_tail = 0.1, neg_cut = neg_cut, pov_cut = pov_cut, cut_num = 1000, n_col = 3)
 
-fun_plot_marginal_tail_neg(pdf_name = "Figure_Country_Industry_TFP_Growth_neg_tail", title = "Left Tail of Log Density of TFP Growth", cond_ind = 4, var_ind = 7, x_lab = "log(TFP Growth)", c_names = ind_names, leg_pos = "topleft", cut_tail = 0.1, neg_cut = neg_cut, pov_cut = pov_cut, cut_num = 2000, n_col = 3)
+fun_plot_marginal_tail_neg(pdf_name = "Figure_Country_Industry_TFP_Growth_neg_tail", title = "Left Tail of Log Density of TFP Growth", cond_ind = 4, var_ind = 7, x_lab = "log(TFP Growth)", c_names = ind_name_table$ind_names, leg_pos = "topleft", cut_tail = 0.1, neg_cut = neg_cut, pov_cut = pov_cut, cut_num = 1000, n_col = 3)
