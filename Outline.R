@@ -332,25 +332,25 @@ pov_cut <- 0.9975 # positive cut-off point
 
 # cross-sectional plots of LP and LP\_change (country-year)
 
-fun_plot_marginal(pdf_name = "Figure_Country_Year_LP", title = "Log Density of Labor Productivty", cond_ind = 2, var_ind = 5, x_lab = "LP", c_names = year_names, neg_cut = neg_cut, pov_cut = pov_cut, cut_num = 0, n_col = 2)
+fun_plot_marginal(pdf_name = "Figure_Country_Year_LP", title = "Log Density of Labor Productivtiy", cond_ind = 2, var_ind = 5, x_lab = "LP", c_names = year_names, neg_cut = neg_cut, pov_cut = pov_cut, cut_num = 0, n_col = 2)
 
-fun_plot_marginal(pdf_name = "Figure_Country_Year_LP_Growth", title = "Log Density of Labor Productivty Growth", cond_ind = 2, var_ind = 6, x_lab = "LP Growth(%)", c_names = year_names, neg_cut = neg_cut, pov_cut = pov_cut, cut_num = 0, n_col = 2)
+fun_plot_marginal(pdf_name = "Figure_Country_Year_LP_Growth", title = "Log Density of Labor Productivtiy Growth", cond_ind = 2, var_ind = 6, x_lab = "LP Growth(%)", c_names = year_names, neg_cut = neg_cut, pov_cut = pov_cut, cut_num = 0, n_col = 2)
 
 fun_plot_marginal(pdf_name = "Figure_Country_Year_TFP_Growth", title = "Log Density of TFP Growth", cond_ind = 2, var_ind = 7, x_lab = "TFP (%)", c_names = year_names, neg_cut = neg_cut, pov_cut = pov_cut, cut_num = 0, n_col = 2)
 
 # cross-sectional plots of LP and LP\_change (country-size)
 
-fun_plot_marginal(pdf_name = "Figure_Country_Size_LP", title = "Log Density of Labor Productivty", cond_ind = 3, var_ind = 5, x_lab = "LP", c_names = size_names, neg_cut = neg_cut, pov_cut = pov_cut, cut_num = 5000, n_col = 1)
+fun_plot_marginal(pdf_name = "Figure_Country_Size_LP", title = "Log Density of Labor Productivtiy", cond_ind = 3, var_ind = 5, x_lab = "LP", c_names = size_names, neg_cut = neg_cut, pov_cut = pov_cut, cut_num = 5000, n_col = 1)
 
-fun_plot_marginal(pdf_name = "Figure_Country_Size_LP_Growth", title = "Log Density of Labor Productivty Growth", cond_ind = 3, var_ind = 6, x_lab = "LP Growth(%)", c_names = size_names, neg_cut = neg_cut, pov_cut = pov_cut, cut_num = 5000, n_col = 1)
+fun_plot_marginal(pdf_name = "Figure_Country_Size_LP_Growth", title = "Log Density of Labor Productivtiy Growth", cond_ind = 3, var_ind = 6, x_lab = "LP Growth(%)", c_names = size_names, neg_cut = neg_cut, pov_cut = pov_cut, cut_num = 5000, n_col = 1)
 
 fun_plot_marginal(pdf_name = "Figure_Country_Size_TFP_Growth", title = "Log Density of TFP Growth", cond_ind = 3, var_ind = 7, x_lab = "TFP Growth(%)", c_names = size_names, neg_cut = neg_cut, pov_cut = pov_cut, cut_num = 5000, n_col = 1)
 
 # cross-sectional plots of LP and LP\_change (country-industry)
 
-fun_plot_marginal(pdf_name = "Figure_Country_Industry_LP", title = "Log Density of Labor Productivty", cond_ind = 4, var_ind = 5, x_lab = "LP", c_names = ind_name_table$ind_names, neg_cut = neg_cut, pov_cut = pov_cut, cut_num = 1000, n_col = 3)
+fun_plot_marginal(pdf_name = "Figure_Country_Industry_LP", title = "Log Density of Labor Productivtiy", cond_ind = 4, var_ind = 5, x_lab = "LP", c_names = ind_name_table$ind_names, neg_cut = neg_cut, pov_cut = pov_cut, cut_num = 1000, n_col = 3)
 
-fun_plot_marginal(pdf_name = "Figure_Country_Industry_LP_Growth", title = "Log Density of Labor Productivty Growth", cond_ind = 4, var_ind = 6, x_lab = "LP Growth(%)", c_names = ind_name_table$ind_names, neg_cut = neg_cut, pov_cut = pov_cut, cut_num = 1000, n_col = 3)
+fun_plot_marginal(pdf_name = "Figure_Country_Industry_LP_Growth", title = "Log Density of Labor Productivtiy Growth", cond_ind = 4, var_ind = 6, x_lab = "LP Growth(%)", c_names = ind_name_table$ind_names, neg_cut = neg_cut, pov_cut = pov_cut, cut_num = 1000, n_col = 3)
 
 fun_plot_marginal(pdf_name = "Figure_Country_Industry_TFP_Growth", title = "Log Density of TFP Growth", cond_ind = 4, var_ind = 7, x_lab = "TFP Growth(%)", c_names =  ind_name_table$ind_names, neg_cut = neg_cut, pov_cut = pov_cut, cut_num = 1000, n_col = 3)
 
@@ -449,23 +449,23 @@ fun_plot_marginal_tail <- function(pdf_name, title, cond_ind, var_ind, x_lab, c_
 # cut_tail is set to be 0.9
 
 ##cross-sectional plots of LP and LP\_change (country-year)
-fun_plot_marginal_tail(pdf_name = "Figure_Country_Year_LP_pov_tail", title = "Right Tail of Log Density of Labor Productivty", cond_ind = 2, var_ind = 5, x_lab = "log(LP)", c_names = year_names, leg_pos = "topright", cut_tail = 0.9, neg_cut = neg_cut, pov_cut = pov_cut, cut_num = 0, n_col = 2)
+fun_plot_marginal_tail(pdf_name = "Figure_Country_Year_LP_pov_tail", title = "Right Tail of Log Density of Labor Productivtiy", cond_ind = 2, var_ind = 5, x_lab = "log(LP)", c_names = year_names, leg_pos = "topright", cut_tail = 0.9, neg_cut = neg_cut, pov_cut = pov_cut, cut_num = 0, n_col = 2)
 
-fun_plot_marginal_tail(pdf_name = "Figure_Country_Year_LP_Growth_pov_tail", title = "Right Tail of Log Density of Labor Productivty Growth", cond_ind = 2, var_ind = 6, x_lab = "log(LP Growth)", c_names = year_names, leg_pos = "topright", cut_tail = 0.9, neg_cut = neg_cut, pov_cut = pov_cut, cut_num = 0, n_col = 2)
+fun_plot_marginal_tail(pdf_name = "Figure_Country_Year_LP_Growth_pov_tail", title = "Right Tail of Log Density of Labor Productivtiy Growth", cond_ind = 2, var_ind = 6, x_lab = "log(LP Growth)", c_names = year_names, leg_pos = "topright", cut_tail = 0.9, neg_cut = neg_cut, pov_cut = pov_cut, cut_num = 0, n_col = 2)
 
 fun_plot_marginal_tail(pdf_name = "Figure_Country_Year_TFP_Growth_pov_tail", title = "Right Tail of Log Density of TFP Growth", cond_ind = 2, var_ind = 7, x_lab = "log(TFP Growth)", c_names = year_names, leg_pos = "topright", cut_tail = 0.9, neg_cut = neg_cut, pov_cut = pov_cut, cut_num = 0, n_col = 2)
 
 #cross-sectional plots of LP and LP\_change (country-size)
-fun_plot_marginal_tail(pdf_name = "Figure_Country_Size_LP_pov_tail", title = "Right Tail of Log Density of Labor Productivty", cond_ind = 3, var_ind = 5, x_lab = "log(LP)", c_names = size_names, leg_pos = "bottomleft", cut_tail = 0.9, neg_cut = neg_cut, pov_cut = pov_cut, cut_num = 5000, n_col = 1)
+fun_plot_marginal_tail(pdf_name = "Figure_Country_Size_LP_pov_tail", title = "Right Tail of Log Density of Labor Productivtiy", cond_ind = 3, var_ind = 5, x_lab = "log(LP)", c_names = size_names, leg_pos = "bottomleft", cut_tail = 0.9, neg_cut = neg_cut, pov_cut = pov_cut, cut_num = 5000, n_col = 1)
 
-fun_plot_marginal_tail(pdf_name = "Figure_Country_Size_LP_Growth_pov_tail", title = "Right Tail of Log Density of Labor Productivty Growth", cond_ind = 3, var_ind = 6, x_lab = "log(LP Growth)", c_names = size_names, leg_pos = "bottomleft", cut_tail = 0.9, neg_cut = neg_cut, pov_cut = pov_cut, cut_num = 5000, n_col = 1)
+fun_plot_marginal_tail(pdf_name = "Figure_Country_Size_LP_Growth_pov_tail", title = "Right Tail of Log Density of Labor Productivtiy Growth", cond_ind = 3, var_ind = 6, x_lab = "log(LP Growth)", c_names = size_names, leg_pos = "bottomleft", cut_tail = 0.9, neg_cut = neg_cut, pov_cut = pov_cut, cut_num = 5000, n_col = 1)
 
 fun_plot_marginal_tail(pdf_name = "Figure_Country_Size_TFP_Growth_pov_tail", title = "Right Tail of Log Density of TFP Growth", cond_ind = 3, var_ind = 7, x_lab = "log(TFP Growth)", c_names = size_names, leg_pos = "bottomleft", cut_tail = 0.9, neg_cut = neg_cut, pov_cut = pov_cut, cut_num = 5000, n_col = 1)
 
 # cross-sectional plots of LP and LP\_change (country-industry)
-fun_plot_marginal_tail(pdf_name = "Figure_Country_Industry_LP_pov_tail", title = "Right Tail of Log Density of Labor Productivty", cond_ind = 4, var_ind = 5, x_lab = "log(LP)", c_names = ind_name_table$ind_names, leg_pos = "bottomleft", cut_tail = 0.9, neg_cut = neg_cut, pov_cut = pov_cut, cut_num = 1000, n_col = 3)
+fun_plot_marginal_tail(pdf_name = "Figure_Country_Industry_LP_pov_tail", title = "Right Tail of Log Density of Labor Productivtiy", cond_ind = 4, var_ind = 5, x_lab = "log(LP)", c_names = ind_name_table$ind_names, leg_pos = "bottomleft", cut_tail = 0.9, neg_cut = neg_cut, pov_cut = pov_cut, cut_num = 1000, n_col = 3)
 
-fun_plot_marginal_tail(pdf_name = "Figure_Country_Industry_LP_Growth_pov_tail", title = "Right Tail of Log Density of Labor Productivty Growth", cond_ind = 4, var_ind = 6, x_lab = "log(LP Growth)", c_names = ind_name_table$ind_names, leg_pos = "bottomleft", cut_tail = 0.9, neg_cut = neg_cut, pov_cut = pov_cut, cut_num = 1000, n_col = 3)
+fun_plot_marginal_tail(pdf_name = "Figure_Country_Industry_LP_Growth_pov_tail", title = "Right Tail of Log Density of Labor Productivtiy Growth", cond_ind = 4, var_ind = 6, x_lab = "log(LP Growth)", c_names = ind_name_table$ind_names, leg_pos = "bottomleft", cut_tail = 0.9, neg_cut = neg_cut, pov_cut = pov_cut, cut_num = 1000, n_col = 3)
 
 fun_plot_marginal_tail(pdf_name = "Figure_Country_Industry_TFP_Growth_pov_tail", title = "Right Tail of Log Density of TFP Growth", cond_ind = 4, var_ind = 7, x_lab = "log(TFP Growth)", c_names = ind_name_table$ind_names, leg_pos = "bottomleft", cut_tail = 0.9, neg_cut = neg_cut, pov_cut = pov_cut, cut_num = 1000, n_col = 3)
 
@@ -568,22 +568,22 @@ fun_plot_marginal_tail_neg <- function(pdf_name, title, cond_ind, var_ind, x_lab
 
 ## 5.2. Plots
 # cross-sectional plots of LP and LP\_change (country-year)
-fun_plot_marginal_tail_neg(pdf_name = "Figure_Country_Year_LP_neg_tail", title = "Left Tail of Log Density of Labor Productivty", cond_ind = 2, var_ind = 5, x_lab = "log(LP)", c_names = year_names, leg_pos = "topleft", cut_tail = 0.1, neg_cut = neg_cut, pov_cut = pov_cut, cut_num = 10000, n_col = 2)
+fun_plot_marginal_tail_neg(pdf_name = "Figure_Country_Year_LP_neg_tail", title = "Left Tail of Log Density of Labor Productivtiy", cond_ind = 2, var_ind = 5, x_lab = "log(LP)", c_names = year_names, leg_pos = "topleft", cut_tail = 0.1, neg_cut = neg_cut, pov_cut = pov_cut, cut_num = 10000, n_col = 2)
 
-fun_plot_marginal_tail_neg(pdf_name = "Figure_Country_Year_LP_Growth_neg_tail", title = "Left Tail of Log Density of Labor Productivty Growth", cond_ind = 2, var_ind = 6, x_lab = "log(LP Growth)", c_names = year_names, leg_pos = "topleft", cut_tail = 0.1, neg_cut = neg_cut, pov_cut = pov_cut, cut_num = 10000, n_col = 2)
+fun_plot_marginal_tail_neg(pdf_name = "Figure_Country_Year_LP_Growth_neg_tail", title = "Left Tail of Log Density of Labor Productivtiy Growth", cond_ind = 2, var_ind = 6, x_lab = "log(LP Growth)", c_names = year_names, leg_pos = "topleft", cut_tail = 0.1, neg_cut = neg_cut, pov_cut = pov_cut, cut_num = 10000, n_col = 2)
 
 fun_plot_marginal_tail_neg(pdf_name = "Figure_Country_Year_TFP_Growth_neg_tail", title = "Left Tail of Log Density of TFP Growth", cond_ind = 2, var_ind = 7, x_lab = "log(TFP Growth)", c_names = year_names, leg_pos = "topleft", cut_tail = 0.1, neg_cut = neg_cut, pov_cut = pov_cut, cut_num = 10000, n_col = 2)
 
 #cross-sectional plots of LP and LP\_change (country-size)
-fun_plot_marginal_tail_neg(pdf_name = "Figure_Country_Size_LP_neg_tail", title = "Left Tail of Log Density of Labor Productivty", cond_ind = 3, var_ind = 5, x_lab = "log(LP)", c_names = size_names, leg_pos = "topleft", cut_tail = 0.1, neg_cut = neg_cut, pov_cut = pov_cut, cut_num = 5000, n_col = 1)
+fun_plot_marginal_tail_neg(pdf_name = "Figure_Country_Size_LP_neg_tail", title = "Left Tail of Log Density of Labor Productivtiy", cond_ind = 3, var_ind = 5, x_lab = "log(LP)", c_names = size_names, leg_pos = "topleft", cut_tail = 0.1, neg_cut = neg_cut, pov_cut = pov_cut, cut_num = 5000, n_col = 1)
 
-fun_plot_marginal_tail_neg(pdf_name = "Figure_Country_Size_LP_Growth_neg_tail", title = "Left Tail of Log Density of Labor Productivty Growth", cond_ind = 3, var_ind = 6, x_lab = "log(LP Growth)", c_names = size_names, leg_pos = "topleft", cut_tail = 0.1, neg_cut = neg_cut, pov_cut = pov_cut, cut_num = 5000, n_col = 1)
+fun_plot_marginal_tail_neg(pdf_name = "Figure_Country_Size_LP_Growth_neg_tail", title = "Left Tail of Log Density of Labor Productivtiy Growth", cond_ind = 3, var_ind = 6, x_lab = "log(LP Growth)", c_names = size_names, leg_pos = "topleft", cut_tail = 0.1, neg_cut = neg_cut, pov_cut = pov_cut, cut_num = 5000, n_col = 1)
 
 fun_plot_marginal_tail_neg(pdf_name = "Figure_Country_Size_TFP_Growth_neg_tail", title = "Left Tail of Log Density of TFP Growth", cond_ind = 3, var_ind = 7, x_lab = "log(TFP Growth)", c_names = size_names, leg_pos = "topleft", cut_tail = 0.1, neg_cut = neg_cut, pov_cut = pov_cut, cut_num = 5000, n_col = 1)
 
 # cross-sectional plots of LP and LP\_change (country-industry)
-fun_plot_marginal_tail_neg(pdf_name = "Figure_Country_Industry_LP_neg_tail", title = "Left Tail of Log Density of Labor Productivty", cond_ind = 4, var_ind = 5, x_lab = "log(LP)", c_names = ind_name_table$ind_names, leg_pos = "topleft", cut_tail = 0.1, neg_cut = neg_cut, pov_cut = pov_cut, cut_num = 1000, n_col = 3)
+fun_plot_marginal_tail_neg(pdf_name = "Figure_Country_Industry_LP_neg_tail", title = "Left Tail of Log Density of Labor Productivtiy", cond_ind = 4, var_ind = 5, x_lab = "log(LP)", c_names = ind_name_table$ind_names, leg_pos = "topleft", cut_tail = 0.1, neg_cut = neg_cut, pov_cut = pov_cut, cut_num = 1000, n_col = 3)
 
-fun_plot_marginal_tail_neg(pdf_name = "Figure_Country_Industry_LP_Growth_neg_tail", title = "Left Tail of Log Density of Labor Productivty Growth", cond_ind = 4, var_ind = 6, x_lab = "log(LP Growth)", c_names = ind_name_table$ind_names, leg_pos = "topleft", cut_tail = 0.1, neg_cut = neg_cut, pov_cut = pov_cut, cut_num = 1000, n_col = 3)
+fun_plot_marginal_tail_neg(pdf_name = "Figure_Country_Industry_LP_Growth_neg_tail", title = "Left Tail of Log Density of Labor Productivtiy Growth", cond_ind = 4, var_ind = 6, x_lab = "log(LP Growth)", c_names = ind_name_table$ind_names, leg_pos = "topleft", cut_tail = 0.1, neg_cut = neg_cut, pov_cut = pov_cut, cut_num = 1000, n_col = 3)
 
 fun_plot_marginal_tail_neg(pdf_name = "Figure_Country_Industry_TFP_Growth_neg_tail", title = "Left Tail of Log Density of TFP Growth", cond_ind = 4, var_ind = 7, x_lab = "log(TFP Growth)", c_names = ind_name_table$ind_names, leg_pos = "topleft", cut_tail = 0.1, neg_cut = neg_cut, pov_cut = pov_cut, cut_num = 1000, n_col = 3)
