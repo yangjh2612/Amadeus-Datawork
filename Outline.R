@@ -474,14 +474,29 @@ fun_plot_marginal_tail(pdf_name = "Figure_Country_Industry_TFP_Growth_pov_tail",
 ## the following is the same as above but is for the negative tail. 
 ## 5.1. function
 fun_plot_marginal_tail_neg <- function(pdf_name, title, cond_ind, var_ind, x_lab, c_names, leg_pos, cut_tail, neg_cut, pov_cut, cut_num, n_col) {
-  ### LP_change
-
+  # Function to plot the negative tail in log-log scale
+  # Arguments:
+  #   pdf_name: string, name of output pdf
+  #   title: string, name of plot title
+  #   cond_ind: int, Condition index (property that plots are grouped by) 
+  #   var_ind: int, variable index (property the histogram of which is plotted)
+  #   x_lab: string, x axis label
+  #   c_names: list of strings, legend labels
+  #   leg_pos:    IGNORED
+  #   cut_tail: int, indicator whether to cut tails of the distribution
+  #   neg_cut: float, negative tail cutoff point
+  #   pov_cut: float, positive tail cutoff point
+  #   cut_num: int, minimum number of observations per category to be included
+  #   n_col:     IGNORED
+  # Returns: n/a
 
   pdf(paste(pdf_name, ".pdf", sep = ""), height = 2.7, width = 10)
-  par(mfrow = c(1, 5), mar = c(3, 2.5, 1, 1), mgp = c(1.5, .3, 0), tck = -.01, oma = c(0, 0, 4, 0))
+  par(mfrow = c(1, 5), mar = c(3, 2.5, 1, 1), mgp = c(1.5, .3, 0), tck = -.01, oma = c(0, 0, 4, 4))
 
-  for (k in 1:5) {
-    print(k)
+  for (k in 1:5) {      # for each country
+    #print(k)
+    
+    # prepare data
     dd <- Five_list_Cleaned[[k]] %>%
       select(IDNR, Year, COMPCAT_one, NACE_CAT, LP, LP_g, Zeta, EMPL) %>%
       filter(EMPL > 1) %>%
@@ -499,12 +514,16 @@ fun_plot_marginal_tail_neg <- function(pdf_name, title, cond_ind, var_ind, x_lab
       filter(Var > quantile(Var, neg_cut) & Var < quantile(Var, pov_cut)) %>%
       group_by(Cond) %>%
       filter(length(IDNR) > cut_num)
-
-
+    
+    # get mode from histogram over all years
+    dd_hist <- hist(dd$Var, breaks = seq(min(dd$Var), max(dd$Var), l = 100 + 1), plot = F) # hist info for the target variable
+    Var_mode <- dd_hist$mids[which.max(dd_hist$density)]
+    
+    # obtain plot margins 
     dd_info <- dd %>%
       group_by(Cond) %>%
       filter(Var < quantile(Var, cut_tail)) %>%
-      mutate(Var = Var - min(Var)) %>%
+      mutate(Var = Var_mode - Var) %>%          # apply transformation using mode for plot margins
       filter(Var > 0) %>%
       summarise(
         x_min = min(hist(log(Var), breaks = seq(min(log(Var)), max(log(Var)), l = 50 + 1), plot = F)$mids),
@@ -518,7 +537,7 @@ fun_plot_marginal_tail_neg <- function(pdf_name, title, cond_ind, var_ind, x_lab
     x_max <- max(dd_info$x_max)
     y_max <- max(dd_info$y_max)
 
-
+    # prepare labels
     c_uni <- unique(dd$Cond)
     
     c_uni_name <- c()
@@ -539,17 +558,30 @@ fun_plot_marginal_tail_neg <- function(pdf_name, title, cond_ind, var_ind, x_lab
     }
     color_ind <- c(brewer.pal(n = 8, name = "Dark2"), brewer.pal(n = 8, name = "Set3"), "grey", "blue", "green", "red")[1:length(c_names)]
 
-
+    # prepare axis ticks labels
+    # use log of mode for pivot of the axis shift, unless that would be too large a shift (abs(log(x)) for x<1 becomes huge). In that case replace by zero.
+    if ( Var_mode <=1 ) {
+      log_Var_mode_position_shift = 0
+    } else {
+      log_Var_mode_position_shift = log(Var_mode)
+    }
+    
+    # maniputalte ticks positions and labels
+    xaxt_positions = log_Var_mode_position_shift - round(log_Var_mode_position_shift - axTicks(1))
+    xaxt_labels = round(log_Var_mode_position_shift - axTicks(1))
+    
+    # create plot canvas
     plot(c(x_min, x_max), c(y_min, y_max), cex = 0, log = "y", yaxt = "n", xaxt = "n", cex.main = 1.2, xlab = x_lab, ylab = "Log-Density", main = country_names_five[k])
-    axis(side = 1, lwd = 0.3, cex.axis = 0.9)
+    axis(side = 1, at=xaxt_positions, labels=xaxt_labels, lwd = 0.3, cex.axis = 0.9)
     axis(side = 2, lwd = 0.3, cex.axis = .9)
 
     c_ind_all <- c()
-
+    
+    # include scatter plot
     for (c in 1:length(c_uni_name)) {
       c_lp <- dd$Var[dd$Cond == c_uni_name[c]]
       c_lp <- c_lp[c_lp < quantile(c_lp, cut_tail)]
-      c_lp <- c_lp - min(c_lp) 
+      c_lp <- Var_mode - c_lp           # apply transformation using mode for scatter plot
       c_lp <- c_lp[c_lp > 0]
 
       c_hist <- hist(log(c_lp), breaks = seq(min(log(c_lp)), max(log(c_lp)), l = 50 + 1), plot = F)
@@ -559,8 +591,8 @@ fun_plot_marginal_tail_neg <- function(pdf_name, title, cond_ind, var_ind, x_lab
       c_ind_all[c] <- c_ind
     }
 
-    legend(leg_pos, legend = c_uni_name_2, pch = c_ind_all, col = color_ind[c_ind_all], bty = "n", xpd = NA, cex = .8, ncol = n_col)
   }
+  legend("topright", inset=c(-0.4,0), legend = c_uni_name, pch = c_ind_all, col = color_ind[c_ind_all], bty = "n", xpd = NA, cex = 1.2, ncol = 1)
   mtext(paste(title), side = 3, line = 1, outer = TRUE, cex = 1.)
   dev.off()
 }
