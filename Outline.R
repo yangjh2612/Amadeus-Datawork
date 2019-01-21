@@ -1,10 +1,7 @@
 ############ 0. Basic Set up ############ 
 ## 0.1 loading of required libraries
-library(dplyr)
-library(RColorBrewer)
-library(xtable)
-library(tidyr)
-
+if (!'pacman' %in% installed.packages()[,'Package']) install.packages('pacman', repos='http://cran.r-project.org')
+pacman::p_load(RColorBrewer,dplyr,xtable,tidyr)
 
 ##  0.2 loading of required data and cleaning
 load("All_list_Cleaned.Rda") ## load the data file created from "Productivity_Analysis_Data.Rmd"
