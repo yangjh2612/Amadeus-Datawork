@@ -1,3 +1,11 @@
+# Script to produce tables and plots for the paper.
+# The script proceeds as follows:
+#    0. Basic setup
+#    1. Create LaTeX table of numbers of observations
+#    2. Create plots of 1. Firm Size and 2. Industry proportions
+#    3. Create semi-log plots for LP, LP growth, TFP growth by Year, Size, and Industry for sample of five countries
+#    4. Create log-log plots for tails for LP, LP growth, TFP growth by Year, Size, and Industry for sample of five countries
+
 ############ 0. Basic Set up ############ 
 ## 0.1 loading of required libraries
 if (!'pacman' %in% installed.packages()[,'Package']) install.packages('pacman', repos='http://cran.r-project.org')
