@@ -1,0 +1,9 @@
+Package: fitting.levy
+Title: Fitting to Levy alpha-stable distributions
+Version: 0.1
+Description: Package handles fitting data to Levy alpha-stable distribution
+    functions. It includes goodness of fit measures and bootstrapping for 
+    SD estimation.
+Depends: R (>= 3.1.0)
+License: MIT Expat License (As is, no warranty)
+LazyData: true
