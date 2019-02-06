@@ -182,7 +182,7 @@ Zeta_g_ind_Levy_list <- fun_fit_levy(dat = All_list_Cleaned_cut, bin_num = 100, 
 
 ### Save the result
 # setwd("~/Desktop/Cleaned Rda/Productivity")
-save(LP_year_Levy_list, LP_g_year_Levy_list, Zeta_g_year_Levy_list, LP_size_Levy_list, LP_g_size_Levy_list, Zeta_g_size_Levy_list, LP_ind_Levy_list, LP_g_ind_Levy_list, Zeta_g_ind_Levy_list, file = "Levy_list.Rda")
+save(LP_year_Levy_list, LP_g_year_Levy_list, Zeta_g_year_Levy_list, LP_size_Levy_list, LP_g_size_Levy_list, Zeta_g_size_Levy_list, LP_ind_Levy_list, LP_g_ind_Levy_list, Zeta_g_ind_Levy_list, file = "Levy_list_GMM.Rda")
 
 
 # McCulloch quantile fits
@@ -222,4 +222,4 @@ Zeta_g_ind_Levy_list <- fun_fit_levy(dat = All_list_Cleaned_cut, bin_num = 100, 
 
 ### Save the result
 # setwd("~/Desktop/Cleaned Rda/Productivity")
-save(LP_year_Levy_list, LP_g_year_Levy_list, Zeta_g_year_Levy_list, LP_size_Levy_list, LP_g_size_Levy_list, Zeta_g_size_Levy_list, LP_ind_Levy_list, LP_g_ind_Levy_list, Zeta_g_ind_Levy_list, file = "Levy_list_GMM.Rda")
+save(LP_year_Levy_list, LP_g_year_Levy_list, Zeta_g_year_Levy_list, LP_size_Levy_list, LP_g_size_Levy_list, Zeta_g_size_Levy_list, LP_ind_Levy_list, LP_g_ind_Levy_list, Zeta_g_ind_Levy_list, file = "Levy_list_QT.Rda")
