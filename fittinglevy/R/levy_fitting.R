@@ -10,6 +10,8 @@ levy_fitting <- function(dat_t, bin_num, include_bootstrap=FALSE, fitting_method
       est_levy <- Levy_fun_QT(p_data) # Levy estimation with QT
   } else if (fitting_method=="GMM") {
       est_levy <- Levy_fun_GMM(p_data)
+  } else if (fitting_method=="ML") {
+      est_levy <- Levy_fun_ML(p_data)
   } else {
       print("Non-implemented fitting method requested. You must implement it first. Exiting.")
       quit(status=1)
@@ -24,7 +26,13 @@ levy_fitting <- function(dat_t, bin_num, include_bootstrap=FALSE, fitting_method
       ## ... if this does also not work, try without parallelization. This will take multiple times longer.
       #est_levy_std_error <- boot(p_data, wrapper_nonparametric_Levy_fun_QT, R=100, sim="ordinary")
     } else if (fitting_method=="GMM") {
-      est_levy_std_error <- boot(p_data, wrapper_nonparametric_Levy_fun_GMM, R=1000, sim="ordinary", parallel="multicore", ncpus=3)
+      est_levy_std_error <- boot(p_data, wrapper_nonparametric_Levy_fun_GMM, R=1000, sim="ordinary", parallel="multicore", ncpus=3)     # TODO: wrapper_nonparametric_Levy_fun_GMM is not implemented
+      ## Note: if this does not work on windows, try with snow instead of multicore
+      #est_levy_std_error <- boot(p_data, wrapper_nonparametric_Levy_fun_GMM, R=100, sim="ordinary", parallel="snow", ncpus=3)
+      ## ... if this does also not work, try without parallelization. This will take multiple times longer.
+      #est_levy_std_error <- boot(p_data, wrapper_nonparametric_Levy_fun_GMM, R=100, sim="ordinary")
+    } else if (fitting_method=="ML") {
+      est_levy_std_error <- boot(p_data, wrapper_nonparametric_Levy_fun_ML, R=1000, sim="ordinary", parallel="multicore", ncpus=3)      # TODO: wrapper_nonparametric_Levy_fun_ML is not implemented
       ## Note: if this does not work on windows, try with snow instead of multicore
       #est_levy_std_error <- boot(p_data, wrapper_nonparametric_Levy_fun_GMM, R=100, sim="ordinary", parallel="snow", ncpus=3)
       ## ... if this does also not work, try without parallelization. This will take multiple times longer.
