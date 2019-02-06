@@ -145,6 +145,45 @@ neg_cut <- 0.0025 # negative cut-off point
 pov_cut <- 0.9975 # positive cut-off point
 
 
+# ML fits
+
+## Year class
+# LP conditional on year (year class)
+LP_year_Levy_list <- fun_fit_levy(dat = All_list_Cleaned_cut, bin_num = 100, cond_ind = 2, var_ind = 5, c_names = year_names, cut_num = 0, neg_cut = neg_cut, pov_cut = pov_cut, fitting_method="ML")
+
+# LP_change conditional on year
+LP_g_year_Levy_list <- fun_fit_levy(dat = All_list_Cleaned_cut, bin_num = 100, cond_ind = 2, var_ind = 6, c_names = year_names, cut_num = 0, neg_cut = neg_cut, pov_cut = pov_cut, fitting_method="ML")
+
+# Zeta  conditional on year
+Zeta_g_year_Levy_list <- fun_fit_levy(dat = All_list_Cleaned_cut, bin_num = 100, cond_ind = 2, var_ind = 7, c_names = year_names, cut_num = 0, neg_cut = neg_cut, pov_cut = pov_cut, fitting_method="ML")
+
+
+## Size class
+# LP conditional on size
+LP_size_Levy_list <- fun_fit_levy(dat = All_list_Cleaned_cut, bin_num = 100, cond_ind = 3, var_ind = 5, c_names = size_names, cut_num = 5000, neg_cut = neg_cut, pov_cut = pov_cut, fitting_method="ML")
+
+# LP_change conditional on size
+LP_g_size_Levy_list <- fun_fit_levy(dat = All_list_Cleaned_cut, bin_num = 100, cond_ind = 3, var_ind = 6, c_names = size_names, cut_num = 5000, neg_cut = neg_cut, pov_cut = pov_cut, fitting_method="ML")
+
+# Zeta  conditional on size
+Zeta_g_size_Levy_list <- fun_fit_levy(dat = All_list_Cleaned_cut, bin_num = 100, cond_ind = 3, var_ind = 7, c_names = size_names, cut_num = 5000, neg_cut = neg_cut, pov_cut = pov_cut, fitting_method="ML")
+
+
+## Industry class
+# LP conditional on sector
+LP_ind_Levy_list <- fun_fit_levy(dat = All_list_Cleaned_cut, bin_num = 100, cond_ind = 4, var_ind = 5, c_names = ind_name_table$ind_names, cut_num = 1000, neg_cut = neg_cut, pov_cut = pov_cut, fitting_method="ML")
+
+# LP_change conditional on sector
+LP_g_ind_Levy_list <- fun_fit_levy(dat = All_list_Cleaned_cut, bin_num = 100, cond_ind = 4, var_ind = 6, c_names = ind_name_table$ind_names, cut_num = 1000, neg_cut = neg_cut, pov_cut = pov_cut, fitting_method="ML")
+
+# Zeta conditional on sector
+Zeta_g_ind_Levy_list <- fun_fit_levy(dat = All_list_Cleaned_cut, bin_num = 100, cond_ind = 4, var_ind = 7, c_names = ind_name_table$ind_names, cut_num = 1000, neg_cut = neg_cut, pov_cut = pov_cut, fitting_method="ML")
+
+
+### Save the result
+# setwd("~/Desktop/Cleaned Rda/Productivity")
+save(LP_year_Levy_list, LP_g_year_Levy_list, Zeta_g_year_Levy_list, LP_size_Levy_list, LP_g_size_Levy_list, Zeta_g_size_Levy_list, LP_ind_Levy_list, LP_g_ind_Levy_list, Zeta_g_ind_Levy_list, file = "Levy_list_ML.Rda")
+
 # GMM fits
 
 ## Year class
