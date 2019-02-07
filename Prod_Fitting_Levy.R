@@ -78,7 +78,7 @@ fun_fit_levy <- function(dat, bin_num, cond_ind, var_ind, c_names, cut_num, neg_
       result_list[[k]] <- c_list # record the result from "fun_info_gen"
     }
   }
-  all_list <- list(result_list, c_uni_list, c_uni_num_list, c_uni_list_2)   # TODO: should be resolved. This will create a flat list every fourth element of which is fitting parameters (with the other 3 elements being other stuff, year numbers, and indexes)
+  all_list <- list(result_list, c_uni_list, c_uni_num_list, c_uni_list_2)
   return(all_list)
 }
 
