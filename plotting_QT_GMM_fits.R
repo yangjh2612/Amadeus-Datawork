@@ -58,24 +58,6 @@ for (i in 1:4) {                                    # Execute loop for each para
 ggsave("QT_GMM_fit_correspondence.pdf", do.call(grid.arrange,plist))                                                    # QT vs GMM scatter plots
 ggsave("QT_GMM_fit_soofi_comparison.pdf", do.call(grid.arrange,c(plist2,ncol=4,respect=TRUE)), width = 10, height = 5)  # parameter difference vs. Soofi index scatter plots
 
-if (FALSE) {
-    plist <- list()
-    soofiGMM <- unlist(lapply(GMM, function(z) lapply(z, function(x) x[[6]])))
-    soofiQT <- unlist(lapply(QT, function(z) lapply(z, function(x) x[[6]])))
-    for (i in 1:4) {
-        seriesGMM <- unlist(lapply(GMM, function(z) lapply(z, function(x) x[[5]][[i]])))
-        seriesQT <- unlist(lapply(QT, function(z) lapply(z, function(x) x[[5]][[i]])))
-        diff_series <- abs(seriesGMM - seriesQT)
-        plotdf <- data.frame(diff_series, soofiQT, soofiGMM)
-        plist[[i]] <- ggplot(plotdf, aes(diff_series, soofiQT)) + geom_point(size=.1,shape=16) 
-                    + xlab(paste("Difference", paralist[[i]], sep=" ")) + ylab("Soofi index QT")
-        plist[[4+i]] <- ggplot(plotdf, aes(diff_series, soofiGMM)) + geom_point(size=.1,shape=16) 
-                    + xlab(paste("Difference", paralist[[i]], sep=" ")) + ylab("Soofi index GMM")
-    }
-
-    ggsave("QT_GMM_fit_soofi_comparison.pdf", do.call(grid.arrange,c(plist,ncol=4,respect=TRUE)), width = 10, height = 5)
-}
-
 
 # 3. Create histograms plots of Soofi indices by fitting method (by type of series fitted (separated because sample size is different) and again for all fits).
 # 3.1 By type of series
