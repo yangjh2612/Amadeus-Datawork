@@ -1,3 +1,5 @@
+# Function to do Levy alpha stable fits.
+
 ############ 0. Basic Set up ############
 ## 0.1. loading of required libraries
 
@@ -9,7 +11,7 @@ devtools::load_all("fittinglevy")
 
 ## 0.3 remaining function definitions: 
 # the fuction for the fitting result
-fun_fit_levy <- function(dat, bin_num, cond_ind, var_ind, c_names, cut_num, neg_cut, pov_cut) { # the function takes 8 arguments: 1) data generated and cleaned in section 0.2, 2) the number of bins, 3) the index of the variable that is used as the conditional class, 4) the index for target variable, 5) the name of class, 6) the minimum number of observations for each class,  7) the cutting point on the left tail, 8) the cutting point on the right tail
+fun_fit_levy <- function(dat, bin_num, cond_ind, var_ind, c_names, cut_num, neg_cut, pov_cut, fitting_method="QT") { # the function takes 8 arguments: 1) data generated and cleaned in section 0.2, 2) the number of bins, 3) the index of the variable that is used as the conditional class, 4) the index for target variable, 5) the name of class, 6) the minimum number of observations for each class,  7) the cutting point on the left tail, 8) the cutting point on the right tail
   result_list <- list()
   
   c_uni_list <- list()
@@ -67,7 +69,7 @@ fun_fit_levy <- function(dat, bin_num, cond_ind, var_ind, c_names, cut_num, neg_
         print(paste(length(c_uni), c))
         c_lp <- zz$Var[zz$Cond == c_uni_name[c]] # for each class
 
-        levy_result <- levy_fitting(dat_t = c_lp, bin_num = bin_num, include_bootstrap=FALSE) # Levy estimation
+        levy_result <- levy_fitting(dat_t = c_lp, bin_num = bin_num, include_bootstrap=FALSE, fitting_method) # Levy estimation
         c_list[[c]] <- list(raw_data = levy_result$raw_data, data_mid = levy_result$data_mid, data_p = levy_result$data_p, levy_q = levy_result$levy_q, levy_para = levy_result$levy_para, levy_soofi = levy_result$levy_soofi)
       }
       c_uni_list[[k]] <- c_uni_name # record the ordered name of unique class
@@ -143,6 +145,48 @@ neg_cut <- 0.0025 # negative cut-off point
 pov_cut <- 0.9975 # positive cut-off point
 
 
+# GMM fits
+
+## Year class
+# LP conditional on year (year class)
+LP_year_Levy_list <- fun_fit_levy(dat = All_list_Cleaned_cut, bin_num = 100, cond_ind = 2, var_ind = 5, c_names = year_names, cut_num = 0, neg_cut = neg_cut, pov_cut = pov_cut, fitting_method="GMM")
+
+# LP_change conditional on year
+LP_g_year_Levy_list <- fun_fit_levy(dat = All_list_Cleaned_cut, bin_num = 100, cond_ind = 2, var_ind = 6, c_names = year_names, cut_num = 0, neg_cut = neg_cut, pov_cut = pov_cut, fitting_method="GMM")
+
+# Zeta  conditional on year
+Zeta_g_year_Levy_list <- fun_fit_levy(dat = All_list_Cleaned_cut, bin_num = 100, cond_ind = 2, var_ind = 7, c_names = year_names, cut_num = 0, neg_cut = neg_cut, pov_cut = pov_cut, fitting_method="GMM")
+
+
+## Size class
+# LP conditional on size
+LP_size_Levy_list <- fun_fit_levy(dat = All_list_Cleaned_cut, bin_num = 100, cond_ind = 3, var_ind = 5, c_names = size_names, cut_num = 5000, neg_cut = neg_cut, pov_cut = pov_cut, fitting_method="GMM")
+
+# LP_change conditional on size
+LP_g_size_Levy_list <- fun_fit_levy(dat = All_list_Cleaned_cut, bin_num = 100, cond_ind = 3, var_ind = 6, c_names = size_names, cut_num = 5000, neg_cut = neg_cut, pov_cut = pov_cut, fitting_method="GMM")
+
+# Zeta  conditional on size
+Zeta_g_size_Levy_list <- fun_fit_levy(dat = All_list_Cleaned_cut, bin_num = 100, cond_ind = 3, var_ind = 7, c_names = size_names, cut_num = 5000, neg_cut = neg_cut, pov_cut = pov_cut, fitting_method="GMM")
+
+
+## Industry class
+# LP conditional on sector
+LP_ind_Levy_list <- fun_fit_levy(dat = All_list_Cleaned_cut, bin_num = 100, cond_ind = 4, var_ind = 5, c_names = ind_name_table$ind_names, cut_num = 1000, neg_cut = neg_cut, pov_cut = pov_cut, fitting_method="GMM")
+
+# LP_change conditional on sector
+LP_g_ind_Levy_list <- fun_fit_levy(dat = All_list_Cleaned_cut, bin_num = 100, cond_ind = 4, var_ind = 6, c_names = ind_name_table$ind_names, cut_num = 1000, neg_cut = neg_cut, pov_cut = pov_cut, fitting_method="GMM")
+
+# Zeta conditional on sector
+Zeta_g_ind_Levy_list <- fun_fit_levy(dat = All_list_Cleaned_cut, bin_num = 100, cond_ind = 4, var_ind = 7, c_names = ind_name_table$ind_names, cut_num = 1000, neg_cut = neg_cut, pov_cut = pov_cut, fitting_method="GMM")
+
+
+### Save the result
+# setwd("~/Desktop/Cleaned Rda/Productivity")
+save(LP_year_Levy_list, LP_g_year_Levy_list, Zeta_g_year_Levy_list, LP_size_Levy_list, LP_g_size_Levy_list, Zeta_g_size_Levy_list, LP_ind_Levy_list, LP_g_ind_Levy_list, Zeta_g_ind_Levy_list, file = "Levy_list_GMM.Rda")
+
+
+# McCulloch quantile fits
+
 ## Year class
 # LP conditional on year (year class)
 LP_year_Levy_list <- fun_fit_levy(dat = All_list_Cleaned_cut, bin_num = 100, cond_ind = 2, var_ind = 5, c_names = year_names, cut_num = 0, neg_cut = neg_cut, pov_cut = pov_cut)
@@ -178,4 +222,4 @@ Zeta_g_ind_Levy_list <- fun_fit_levy(dat = All_list_Cleaned_cut, bin_num = 100, 
 
 ### Save the result
 # setwd("~/Desktop/Cleaned Rda/Productivity")
-# save(LP_year_Levy_list, LP_g_year_Levy_list, Zeta_g_year_Levy_list, LP_size_Levy_list, LP_g_size_Levy_list, Zeta_g_size_Levy_list, LP_ind_Levy_list, LP_g_ind_Levy_list, Zeta_g_ind_Levy_list, file = "Levy_list.Rda")
+save(LP_year_Levy_list, LP_g_year_Levy_list, Zeta_g_year_Levy_list, LP_size_Levy_list, LP_g_size_Levy_list, Zeta_g_size_Levy_list, LP_ind_Levy_list, LP_g_ind_Levy_list, Zeta_g_ind_Levy_list, file = "Levy_list_QT.Rda")

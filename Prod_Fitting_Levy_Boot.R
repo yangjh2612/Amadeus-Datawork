@@ -1,3 +1,7 @@
+# Function to do Levy alpha stable parameter error estimates using bootstraps.
+
+# TODO: rename variable: est_levy_qt_std_error -> est_levy_std_error
+
 ############ 0. Basic Set up ############
 ## 0.1. loading of required libraries
 
@@ -68,7 +72,7 @@ fun_fit_levy <- function(dat, bin_num, cond_ind, var_ind, c_names, cut_num, neg_
         c_lp <- zz$Var[zz$Cond == c_uni_name[c]] # for each class
 
         levy_result <- levy_fitting(dat_t = c_lp, bin_num = bin_num, include_bootstrap=TRUE) # Levy estimation
-        c_list[[c]] <- list(levy_para = levy_result$levy_para, levy_soofi = levy_result$levy_soofi, est_levy_qt_std_error = levy_result$est_levy_qt_std_error)
+        c_list[[c]] <- list(levy_para = levy_result$levy_para, levy_soofi = levy_result$levy_soofi, est_levy_qt_std_error = levy_result$est_levy_std_error)     # TODO: rename variable: est_levy_qt_std_error -> est_levy_std_error
       }
       c_uni_list[[k]] <- c_uni_name # record the ordered name of unique class
       c_uni_list_2[[k]] <- c_uni_name_2 #
