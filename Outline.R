@@ -1,10 +1,15 @@
+# Script to produce tables and plots for the paper.
+# The script proceeds as follows:
+#    0. Basic setup
+#    1. Create LaTeX table of numbers of observations
+#    2. Create plots of 1. Firm Size and 2. Industry proportions
+#    3. Create semi-log plots for LP, LP growth, TFP growth by Year, Size, and Industry for sample of five countries
+#    4. Create log-log plots for tails for LP, LP growth, TFP growth by Year, Size, and Industry for sample of five countries
+
 ############ 0. Basic Set up ############ 
 ## 0.1 loading of required libraries
-library(dplyr)
-library(RColorBrewer)
-library(xtable)
-library(tidyr)
-
+if (!'pacman' %in% installed.packages()[,'Package']) install.packages('pacman', repos='http://cran.r-project.org')
+pacman::p_load(RColorBrewer,dplyr,xtable,tidyr)
 
 ##  0.2 loading of required data and cleaning
 load("All_list_Cleaned.Rda") ## load the data file created from "Productivity_Analysis_Data.Rmd"
@@ -355,17 +360,45 @@ fun_plot_marginal(pdf_name = "Figure_Country_Industry_LP_Growth", title = "Log D
 fun_plot_marginal(pdf_name = "Figure_Country_Industry_TFP_Growth", title = "Log Density of TFP Growth", cond_ind = 4, var_ind = 7, x_lab = "TFP Growth(%)", c_names =  ind_name_table$ind_names, neg_cut = neg_cut, pov_cut = pov_cut, cut_num = 1000, n_col = 3)
 
 
-############ 4. the distribution of the right tail part ############
-## It is very similar to the function "fun_plot_marginal" so I'd skip the detailed explantions unless there is a major difference that needs to be explanined. Note that this function is only for the right tail 
+############ 4. the distribution of the right tail parts ############
+## 4.1. function
+fun_plot_marginal_tail <- function(pdf_name, title, cond_ind, var_ind, x_lab, c_names, leg_pos, tail_size, neg_cut, pov_cut, cut_num, n_col, left_tail=FALSE) {
+  # Function to plot the negative tail in log-log scale
+  # Arguments:
+  #   pdf_name: string, name of output pdf
+  #   title: string, name of plot title
+  #   cond_ind: int, Condition index (property that plots are grouped by) 
+  #   var_ind: int, variable index (property the histogram of which is plotted)
+  #   x_lab: string, x axis label
+  #   c_names: list of strings, legend labels
+  #   leg_pos:    IGNORED
+  #   tail_size: float, tail size to be included (before removal of outliers)
+  #   neg_cut: float, negative outlier cutoff point
+  #   pov_cut: float, positive outlier cutoff point
+  #   cut_num: int, minimum number of observations per category to be included
+  #   n_col:     IGNORED
+  #   left_tail: boolean, Indicator whether we want the left tail (or, default: the right tail)
+  # Returns: n/a
 
-## 4.1.
-fun_plot_marginal_tail <- function(pdf_name, title, cond_ind, var_ind, x_lab, c_names, leg_pos, cut_tail, neg_cut, pov_cut, cut_num, n_col) { # the "cut_tail" has been added to decide the cut-off of the tail
- 
-    pdf(paste(pdf_name, ".pdf", sep = ""), height = 2.7, width = 10)
-  par(mfrow = c(1, 5), mar = c(3, 2.5, 1, 1), mgp = c(1.5, .3, 0), tck = -.01, oma = c(0, 0, 4, 0))
+  # Prepare pdf parameters
+  pdf(paste(pdf_name, ".pdf", sep = ""), height = 2.7, width = 10)
+  if(cond_ind == 4){    # Industry plot (cond_ind==4) requires 2 column index, therefore wider margin
+    par(mfrow = c(1, 5), mar = c(3, 2.5, 1, 1), mgp = c(1.5, .3, 0), tck = -.01, oma = c(0, 0, 4, 4.7))  
+  } else {
+    par(mfrow = c(1, 5), mar = c(3, 2.5, 1, 1), mgp = c(1.5, .3, 0), tck = -.01, oma = c(0, 0, 4, 4))
+  }
+  
+  # set respective tail cutoff point for left and right tails
+  if (left_tail) {
+    cut_tail = tail_size
+  } else {
+    cut_tail = 1. - tail_size
+  }
 
-  for (k in 1:5) {
-    print(k)
+  for (k in 1:5) {      # for each country
+    #print(k)
+    
+    # prepare data
     dd <- Five_list_Cleaned[[k]] %>%
       select(IDNR, Year, COMPCAT_one, NACE_CAT, LP, LP_g, Zeta, EMPL) %>%
       filter(EMPL > 1) %>%
@@ -383,24 +416,44 @@ fun_plot_marginal_tail <- function(pdf_name, title, cond_ind, var_ind, x_lab, c_
       filter(Var > quantile(Var, neg_cut) & Var < quantile(Var, pov_cut)) %>%
       group_by(Cond) %>%
       filter(length(IDNR) > cut_num)
-
-    dd_info <- dd %>%
-      group_by(Cond) %>%
-      filter(Var > quantile(Var, cut_tail)) %>% # cut the tail 
-      summarise(
-        x_min = min(hist(log(Var), breaks = seq(min(log(Var)), max(log(Var)), l = 50 + 1), plot = F)$mids),
-        x_max = max(hist(log(Var), breaks = seq(min(log(Var)), max(log(Var)), l = 50 + 1), plot = F)$mids),
-        y_min = min(hist(log(Var), breaks = seq(min(log(Var)), max(log(Var)), l = 50 + 1), plot = F)$density),
-        y_max = max(hist(log(Var), breaks = seq(min(log(Var)), max(log(Var)), l = 50 + 1), plot = F)$density)
-      )
+    
+    # get mode from histogram over all years
+    dd_hist <- hist(dd$Var, breaks = seq(min(dd$Var), max(dd$Var), l = 100 + 1), plot = F) # hist info for the target variable
+    Var_mode <- dd_hist$mids[which.max(dd_hist$density)]
+    
+    # obtain plot margins 
+    if (left_tail) {        # left tail
+      dd_info <- dd %>%
+        group_by(Cond) %>%
+        filter(Var < quantile(Var, cut_tail)) %>%
+        mutate(Var = Var_mode - Var) %>%
+        filter(Var > 0) %>%
+        summarise(
+          x_min = min(hist(log(Var), breaks = seq(min(log(Var)), max(log(Var)), l = 25 + 1), plot = F)$mids),
+          x_max = max(hist(log(Var), breaks = seq(min(log(Var)), max(log(Var)), l = 25 + 1), plot = F)$mids),
+          y_min = min(hist(log(Var), breaks = seq(min(log(Var)), max(log(Var)), l = 25 + 1), plot = F)$density[hist(log(Var), breaks = seq(min(log(Var)), max(log(Var)), l = 25 + 1), plot = F)$density > 0]),
+          y_max = max(hist(log(Var), breaks = seq(min(log(Var)), max(log(Var)), l = 25 + 1), plot = F)$density)
+        )
+    } else {                # right tail
+      dd_info <- dd %>%
+        group_by(Cond) %>%
+        filter(Var > quantile(Var, cut_tail)) %>%
+        summarise(
+          x_min = min(hist(log(Var), breaks = seq(min(log(Var)), max(log(Var)), l = 25 + 1), plot = F)$mids),
+          x_max = max(hist(log(Var), breaks = seq(min(log(Var)), max(log(Var)), l = 25 + 1), plot = F)$mids),
+          y_min = min(hist(log(Var), breaks = seq(min(log(Var)), max(log(Var)), l = 25 + 1), plot = F)$density),
+          y_max = max(hist(log(Var), breaks = seq(min(log(Var)), max(log(Var)), l = 25 + 1), plot = F)$density)
+        )
+    }        
 
     x_min <- min(dd_info$x_min)
     y_min <- min(dd_info$y_min[dd_info$y_min > 0])
     x_max <- max(dd_info$x_max)
     y_max <- max(dd_info$y_max)
 
+    # prepare labels
     c_uni <- unique(dd$Cond)
-
+    
     c_uni_name <- c()
     c_uni_num <- c() 
     c_uni_name_2 <- c()
@@ -412,26 +465,47 @@ fun_plot_marginal_tail <- function(pdf_name, title, cond_ind, var_ind, x_lab, c_
     c_uni_num <- sort(c_uni_num)
     c_uni_name <- c_names[c_uni_num]
     
-    if(cond_ind == 4){
-      c_uni_name_2 <- ind_name_table$ind_names_alphabet[c_uni_num]
-    } else{
-      c_uni_name_2 <- c_uni_name
-    }
-
     color_ind <- c(brewer.pal(n = 8, name = "Dark2"), brewer.pal(n = 8, name = "Set3"), "grey", "blue", "green", "red")[1:length(c_names)]
 
-
-
+    # create plot canvas
     plot(c(x_min, x_max), c(y_min, y_max), cex = 0, log = "y", yaxt = "n", xaxt = "n", cex.main = 1.2, xlab = x_lab, ylab = "Log-Density", main = country_names_five[k])
-    axis(side = 1, lwd = 0.3, cex.axis = 0.9)
+
+    # prepare axis ticks labels
+    if (left_tail) {
+      # for left tails use log of mode for pivot of the axis shift, unless that would be too large a shift (abs(log(x)) for x<1 becomes huge). In that case replace by zero.
+      if ( Var_mode <=1 ) {
+        log_Var_mode_position_shift = 0
+      } else {
+        log_Var_mode_position_shift = log(Var_mode)
+      }
+      
+      # maniputalte ticks positions and labels
+      xaxt_positions = log_Var_mode_position_shift - round(log_Var_mode_position_shift - axTicks(1))
+      xaxt_labels = round(log_Var_mode_position_shift - axTicks(1))
+    } else {
+      # for right tails use standard values
+      xaxt_positions = axTicks(1)
+      xaxt_labels = axTicks(1)
+    }
+    
+    # apply axis labels
+    axis(side = 1, at=xaxt_positions, labels=xaxt_labels, lwd = 0.3, cex.axis = 0.9)
     axis(side = 2, lwd = 0.3, cex.axis = .9)
 
-
     c_ind_all <- c()
-
+    
+    # include scatter plot
     for (c in 1:length(c_uni_name)) {
       c_lp <- dd$Var[dd$Cond == c_uni_name[c]]
-      c_lp <- c_lp[c_lp > quantile(c_lp, cut_tail)] # cut the tail 
+
+      if (left_tail) {
+        c_lp <- c_lp[c_lp < quantile(c_lp, cut_tail)]   # cut the tail
+        c_lp <- Var_mode - c_lp                         # apply transformation using mode for scatter plot
+        c_lp <- c_lp[c_lp > 0]                          # remove possibly present negative and zero values
+      } else {
+        c_lp <- c_lp[c_lp > quantile(c_lp, cut_tail)]   # cut the tail 
+      }
+
       c_hist <- hist(log(c_lp), breaks = seq(min(log(c_lp)), max(log(c_lp)), l = 50 + 1), plot = F)
       c_ind <- which(c_names %in% c_uni_name[c])
       points(c_hist$mids, c_hist$density, pch = c_ind, cex = 0.35, col = color_ind[c_ind])
@@ -439,151 +513,67 @@ fun_plot_marginal_tail <- function(pdf_name, title, cond_ind, var_ind, x_lab, c_
       c_ind_all[c] <- c_ind
     }
 
-    legend(leg_pos, legend = c_uni_name_2, pch = c_ind_all, col = color_ind[c_ind_all], bty = "n", xpd = NA, cex = .8, ncol = n_col)
   }
+
+  # legend for last plot and to the right outside the plotting area. 
+  if(cond_ind == 4){    # legend must be two column for industry plots (cond_ind==4)
+    c_uni_name_2 <- ind_name_table$ind_names_alphabet[c_uni_num] # only industry letter code for industry plots
+    n_col <- 2
+    legend("topright", inset=c(-0.525,0), legend = c_uni_name_2, pch = c_ind_all, col = color_ind[c_ind_all], bty = "n", xpd = NA, cex = 1.2, ncol = n_col)
+  } else{
+    c_uni_name_2 <- c_uni_name
+    n_col <- 1
+    legend("topright", inset=c(-0.4,0), legend = c_uni_name_2, pch = c_ind_all, col = color_ind[c_ind_all], bty = "n", xpd = NA, cex = 1.2, ncol = n_col)
+  }
+
+  # title text
   mtext(paste(title), side = 3, line = 1, outer = TRUE, cex = 1.)
   dev.off()
 }
 
-## 4.2. Plot the distributions for the tail part
+## 4.2. Positive tail plots
 # cut_tail is set to be 0.9
 
 ##cross-sectional plots of LP and LP\_change (country-year)
-fun_plot_marginal_tail(pdf_name = "Figure_Country_Year_LP_pov_tail", title = "Right Tail of Log Density of Labor Productivity", cond_ind = 2, var_ind = 5, x_lab = "log(LP)", c_names = year_names, leg_pos = "topright", cut_tail = 0.9, neg_cut = neg_cut, pov_cut = pov_cut, cut_num = 0, n_col = 2)
+fun_plot_marginal_tail(pdf_name = "Figure_Country_Year_LP_pov_tail", title = "Right Tail of Log Density of Labor Productivity", cond_ind = 2, var_ind = 5, x_lab = "log(LP)", c_names = year_names, leg_pos = "topright", tail_size = 0.05, neg_cut = neg_cut, pov_cut = pov_cut, cut_num = 0, n_col = 2)
 
-fun_plot_marginal_tail(pdf_name = "Figure_Country_Year_LP_Growth_pov_tail", title = "Right Tail of Log Density of Labor Productivity Growth", cond_ind = 2, var_ind = 6, x_lab = "log(LP Growth)", c_names = year_names, leg_pos = "topright", cut_tail = 0.9, neg_cut = neg_cut, pov_cut = pov_cut, cut_num = 0, n_col = 2)
+fun_plot_marginal_tail(pdf_name = "Figure_Country_Year_LP_Growth_pov_tail", title = "Right Tail of Log Density of Labor Productivity Growth", cond_ind = 2, var_ind = 6, x_lab = "log(LP Growth)", c_names = year_names, leg_pos = "topright", tail_size = 0.05, neg_cut = neg_cut, pov_cut = pov_cut, cut_num = 0, n_col = 2)
 
-fun_plot_marginal_tail(pdf_name = "Figure_Country_Year_TFP_Growth_pov_tail", title = "Right Tail of Log Density of TFP Growth", cond_ind = 2, var_ind = 7, x_lab = "log(TFP Growth)", c_names = year_names, leg_pos = "topright", cut_tail = 0.9, neg_cut = neg_cut, pov_cut = pov_cut, cut_num = 0, n_col = 2)
+fun_plot_marginal_tail(pdf_name = "Figure_Country_Year_TFP_Growth_pov_tail", title = "Right Tail of Log Density of TFP Growth", cond_ind = 2, var_ind = 7, x_lab = "log(TFP Growth)", c_names = year_names, leg_pos = "topright", tail_size = 0.05, neg_cut = neg_cut, pov_cut = pov_cut, cut_num = 0, n_col = 2)
 
 #cross-sectional plots of LP and LP\_change (country-size)
-fun_plot_marginal_tail(pdf_name = "Figure_Country_Size_LP_pov_tail", title = "Right Tail of Log Density of Labor Productivity", cond_ind = 3, var_ind = 5, x_lab = "log(LP)", c_names = size_names, leg_pos = "bottomleft", cut_tail = 0.9, neg_cut = neg_cut, pov_cut = pov_cut, cut_num = 5000, n_col = 1)
+fun_plot_marginal_tail(pdf_name = "Figure_Country_Size_LP_pov_tail", title = "Right Tail of Log Density of Labor Productivity", cond_ind = 3, var_ind = 5, x_lab = "log(LP)", c_names = size_names, leg_pos = "bottomleft", tail_size = 0.05, neg_cut = neg_cut, pov_cut = pov_cut, cut_num = 5000, n_col = 1)
 
-fun_plot_marginal_tail(pdf_name = "Figure_Country_Size_LP_Growth_pov_tail", title = "Right Tail of Log Density of Labor Productivity Growth", cond_ind = 3, var_ind = 6, x_lab = "log(LP Growth)", c_names = size_names, leg_pos = "bottomleft", cut_tail = 0.9, neg_cut = neg_cut, pov_cut = pov_cut, cut_num = 5000, n_col = 1)
+fun_plot_marginal_tail(pdf_name = "Figure_Country_Size_LP_Growth_pov_tail", title = "Right Tail of Log Density of Labor Productivity Growth", cond_ind = 3, var_ind = 6, x_lab = "log(LP Growth)", c_names = size_names, leg_pos = "bottomleft", tail_size = 0.05, neg_cut = neg_cut, pov_cut = pov_cut, cut_num = 5000, n_col = 1)
 
-fun_plot_marginal_tail(pdf_name = "Figure_Country_Size_TFP_Growth_pov_tail", title = "Right Tail of Log Density of TFP Growth", cond_ind = 3, var_ind = 7, x_lab = "log(TFP Growth)", c_names = size_names, leg_pos = "bottomleft", cut_tail = 0.9, neg_cut = neg_cut, pov_cut = pov_cut, cut_num = 5000, n_col = 1)
+fun_plot_marginal_tail(pdf_name = "Figure_Country_Size_TFP_Growth_pov_tail", title = "Right Tail of Log Density of TFP Growth", cond_ind = 3, var_ind = 7, x_lab = "log(TFP Growth)", c_names = size_names, leg_pos = "bottomleft", tail_size = 0.05, neg_cut = neg_cut, pov_cut = pov_cut, cut_num = 5000, n_col = 1)
 
 # cross-sectional plots of LP and LP\_change (country-industry)
-fun_plot_marginal_tail(pdf_name = "Figure_Country_Industry_LP_pov_tail", title = "Right Tail of Log Density of Labor Productivity", cond_ind = 4, var_ind = 5, x_lab = "log(LP)", c_names = ind_name_table$ind_names, leg_pos = "bottomleft", cut_tail = 0.9, neg_cut = neg_cut, pov_cut = pov_cut, cut_num = 1000, n_col = 3)
+fun_plot_marginal_tail(pdf_name = "Figure_Country_Industry_LP_pov_tail", title = "Right Tail of Log Density of Labor Productivity", cond_ind = 4, var_ind = 5, x_lab = "log(LP)", c_names = ind_name_table$ind_names, leg_pos = "bottomleft", tail_size = 0.05, neg_cut = neg_cut, pov_cut = pov_cut, cut_num = 1000, n_col = 3)
 
-fun_plot_marginal_tail(pdf_name = "Figure_Country_Industry_LP_Growth_pov_tail", title = "Right Tail of Log Density of Labor Productivity Growth", cond_ind = 4, var_ind = 6, x_lab = "log(LP Growth)", c_names = ind_name_table$ind_names, leg_pos = "bottomleft", cut_tail = 0.9, neg_cut = neg_cut, pov_cut = pov_cut, cut_num = 1000, n_col = 3)
+fun_plot_marginal_tail(pdf_name = "Figure_Country_Industry_LP_Growth_pov_tail", title = "Right Tail of Log Density of Labor Productivity Growth", cond_ind = 4, var_ind = 6, x_lab = "log(LP Growth)", c_names = ind_name_table$ind_names, leg_pos = "bottomleft", tail_size = 0.05, neg_cut = neg_cut, pov_cut = pov_cut, cut_num = 1000, n_col = 3)
 
-fun_plot_marginal_tail(pdf_name = "Figure_Country_Industry_TFP_Growth_pov_tail", title = "Right Tail of Log Density of TFP Growth", cond_ind = 4, var_ind = 7, x_lab = "log(TFP Growth)", c_names = ind_name_table$ind_names, leg_pos = "bottomleft", cut_tail = 0.9, neg_cut = neg_cut, pov_cut = pov_cut, cut_num = 1000, n_col = 3)
-
-
-############ 5. the distribution of the right tail part ############
-## the following is the same as above but is for the negative tail. 
-## 5.1. function
-fun_plot_marginal_tail_neg <- function(pdf_name, title, cond_ind, var_ind, x_lab, c_names, leg_pos, cut_tail, neg_cut, pov_cut, cut_num, n_col) {
-  ### LP_change
+fun_plot_marginal_tail(pdf_name = "Figure_Country_Industry_TFP_Growth_pov_tail", title = "Right Tail of Log Density of TFP Growth", cond_ind = 4, var_ind = 7, x_lab = "log(TFP Growth)", c_names = ind_name_table$ind_names, leg_pos = "bottomleft", tail_size = 0.05, neg_cut = neg_cut, pov_cut = pov_cut, cut_num = 1000, n_col = 3)
 
 
-  pdf(paste(pdf_name, ".pdf", sep = ""), height = 2.7, width = 10)
-  par(mfrow = c(1, 5), mar = c(3, 2.5, 1, 1), mgp = c(1.5, .3, 0), tck = -.01, oma = c(0, 0, 4, 0))
-
-  for (k in 1:5) {
-    print(k)
-    dd <- Five_list_Cleaned[[k]] %>%
-      select(IDNR, Year, COMPCAT_one, NACE_CAT, LP, LP_g, Zeta, EMPL) %>%
-      filter(EMPL > 1) %>%
-      mutate(LP = LP / 1000) %>%
-      mutate(LP_g = LP_g * 100)
-
-    dd <- as.data.frame(dd)
-
-    dd$Cond <- dd[, cond_ind]
-    dd$Var <- dd[, var_ind]
-
-    dd <- dd %>%
-      select(IDNR, Cond, Var) %>%
-      na.omit() %>%
-      filter(Var > quantile(Var, neg_cut) & Var < quantile(Var, pov_cut)) %>%
-      group_by(Cond) %>%
-      filter(length(IDNR) > cut_num)
-
-
-    dd_info <- dd %>%
-      group_by(Cond) %>%
-      filter(Var < quantile(Var, cut_tail)) %>%
-      mutate(Var = Var - min(Var)) %>%
-      filter(Var > 0) %>%
-      summarise(
-        x_min = min(hist(log(Var), breaks = seq(min(log(Var)), max(log(Var)), l = 50 + 1), plot = F)$mids),
-        x_max = max(hist(log(Var), breaks = seq(min(log(Var)), max(log(Var)), l = 50 + 1), plot = F)$mids),
-        y_min = min(hist(log(Var), breaks = seq(min(log(Var)), max(log(Var)), l = 50 + 1), plot = F)$density[hist(log(Var), breaks = seq(min(log(Var)), max(log(Var)), l = 50 + 1), plot = F)$density > 0]),
-        y_max = max(hist(log(Var), breaks = seq(min(log(Var)), max(log(Var)), l = 50 + 1), plot = F)$density)
-      )
-
-    x_min <- min(dd_info$x_min)
-    y_min <- min(dd_info$y_min)
-    x_max <- max(dd_info$x_max)
-    y_max <- max(dd_info$y_max)
-
-
-    c_uni <- unique(dd$Cond)
-    
-    c_uni_name <- c()
-    c_uni_num <- c() 
-    c_uni_name_2 <- c()
-    
-    for (i in 1:length(c_uni)) {
-      c_uni_num[i] <- which(c_names %in% c_uni[i])
-    }
-    
-    c_uni_num <- sort(c_uni_num)
-    c_uni_name <- c_names[c_uni_num]
-    
-    if(cond_ind == 4){
-      c_uni_name_2 <- ind_name_table$ind_names_alphabet[c_uni_num]
-    } else{
-      c_uni_name_2 <- c_uni_name
-    }
-    color_ind <- c(brewer.pal(n = 8, name = "Dark2"), brewer.pal(n = 8, name = "Set3"), "grey", "blue", "green", "red")[1:length(c_names)]
-
-
-    plot(c(x_min, x_max), c(y_min, y_max), cex = 0, log = "y", yaxt = "n", xaxt = "n", cex.main = 1.2, xlab = x_lab, ylab = "Log-Density", main = country_names_five[k])
-    axis(side = 1, lwd = 0.3, cex.axis = 0.9)
-    axis(side = 2, lwd = 0.3, cex.axis = .9)
-
-    c_ind_all <- c()
-
-    for (c in 1:length(c_uni_name)) {
-      c_lp <- dd$Var[dd$Cond == c_uni_name[c]]
-      c_lp <- c_lp[c_lp < quantile(c_lp, cut_tail)]
-      c_lp <- c_lp - min(c_lp) 
-      c_lp <- c_lp[c_lp > 0]
-
-      c_hist <- hist(log(c_lp), breaks = seq(min(log(c_lp)), max(log(c_lp)), l = 50 + 1), plot = F)
-      c_ind <- which(c_names %in% c_uni_name[c])
-      points(c_hist$mids, c_hist$density, pch = c_ind, cex = 0.35, col = color_ind[c_ind])
-
-      c_ind_all[c] <- c_ind
-    }
-
-    legend(leg_pos, legend = c_uni_name_2, pch = c_ind_all, col = color_ind[c_ind_all], bty = "n", xpd = NA, cex = .8, ncol = n_col)
-  }
-  mtext(paste(title), side = 3, line = 1, outer = TRUE, cex = 1.)
-  dev.off()
-}
-
-
-## 5.2. Plots
+## 4.3. Negative tail plots
 # cross-sectional plots of LP and LP\_change (country-year)
-fun_plot_marginal_tail_neg(pdf_name = "Figure_Country_Year_LP_neg_tail", title = "Left Tail of Log Density of Labor Productivity", cond_ind = 2, var_ind = 5, x_lab = "log(LP)", c_names = year_names, leg_pos = "topleft", cut_tail = 0.1, neg_cut = neg_cut, pov_cut = pov_cut, cut_num = 10000, n_col = 2)
+fun_plot_marginal_tail(pdf_name = "Figure_Country_Year_LP_neg_tail", title = "Left Tail of Log Density of Labor Productivity", cond_ind = 2, var_ind = 5, x_lab = "log(LP)", c_names = year_names, leg_pos = "topleft", tail_size = 0.05, neg_cut = neg_cut, pov_cut = pov_cut, cut_num = 10000, n_col = 2, left_tail=TRUE)
 
-fun_plot_marginal_tail_neg(pdf_name = "Figure_Country_Year_LP_Growth_neg_tail", title = "Left Tail of Log Density of Labor Productivity Growth", cond_ind = 2, var_ind = 6, x_lab = "log(LP Growth)", c_names = year_names, leg_pos = "topleft", cut_tail = 0.1, neg_cut = neg_cut, pov_cut = pov_cut, cut_num = 10000, n_col = 2)
+fun_plot_marginal_tail(pdf_name = "Figure_Country_Year_LP_Growth_neg_tail", title = "Left Tail of Log Density of Labor Productivity Growth", cond_ind = 2, var_ind = 6, x_lab = "log(LP Growth)", c_names = year_names, leg_pos = "topleft", tail_size = 0.05, neg_cut = neg_cut, pov_cut = pov_cut, cut_num = 10000, n_col = 2, left_tail=TRUE)
 
-fun_plot_marginal_tail_neg(pdf_name = "Figure_Country_Year_TFP_Growth_neg_tail", title = "Left Tail of Log Density of TFP Growth", cond_ind = 2, var_ind = 7, x_lab = "log(TFP Growth)", c_names = year_names, leg_pos = "topleft", cut_tail = 0.1, neg_cut = neg_cut, pov_cut = pov_cut, cut_num = 10000, n_col = 2)
+fun_plot_marginal_tail(pdf_name = "Figure_Country_Year_TFP_Growth_neg_tail", title = "Left Tail of Log Density of TFP Growth", cond_ind = 2, var_ind = 7, x_lab = "log(TFP Growth)", c_names = year_names, leg_pos = "topleft", tail_size = 0.05, neg_cut = neg_cut, pov_cut = pov_cut, cut_num = 10000, n_col = 2, left_tail=TRUE)
 
 #cross-sectional plots of LP and LP\_change (country-size)
-fun_plot_marginal_tail_neg(pdf_name = "Figure_Country_Size_LP_neg_tail", title = "Left Tail of Log Density of Labor Productivity", cond_ind = 3, var_ind = 5, x_lab = "log(LP)", c_names = size_names, leg_pos = "topleft", cut_tail = 0.1, neg_cut = neg_cut, pov_cut = pov_cut, cut_num = 5000, n_col = 1)
+fun_plot_marginal_tail(pdf_name = "Figure_Country_Size_LP_neg_tail", title = "Left Tail of Log Density of Labor Productivity", cond_ind = 3, var_ind = 5, x_lab = "log(LP)", c_names = size_names, leg_pos = "topleft", tail_size = 0.05, neg_cut = neg_cut, pov_cut = pov_cut, cut_num = 5000, n_col = 1, left_tail=TRUE)
 
-fun_plot_marginal_tail_neg(pdf_name = "Figure_Country_Size_LP_Growth_neg_tail", title = "Left Tail of Log Density of Labor Productivity Growth", cond_ind = 3, var_ind = 6, x_lab = "log(LP Growth)", c_names = size_names, leg_pos = "topleft", cut_tail = 0.1, neg_cut = neg_cut, pov_cut = pov_cut, cut_num = 5000, n_col = 1)
+fun_plot_marginal_tail(pdf_name = "Figure_Country_Size_LP_Growth_neg_tail", title = "Left Tail of Log Density of Labor Productivity Growth", cond_ind = 3, var_ind = 6, x_lab = "log(LP Growth)", c_names = size_names, leg_pos = "topleft", tail_size = 0.05, neg_cut = neg_cut, pov_cut = pov_cut, cut_num = 5000, n_col = 1, left_tail=TRUE)
 
-fun_plot_marginal_tail_neg(pdf_name = "Figure_Country_Size_TFP_Growth_neg_tail", title = "Left Tail of Log Density of TFP Growth", cond_ind = 3, var_ind = 7, x_lab = "log(TFP Growth)", c_names = size_names, leg_pos = "topleft", cut_tail = 0.1, neg_cut = neg_cut, pov_cut = pov_cut, cut_num = 5000, n_col = 1)
+fun_plot_marginal_tail(pdf_name = "Figure_Country_Size_TFP_Growth_neg_tail", title = "Left Tail of Log Density of TFP Growth", cond_ind = 3, var_ind = 7, x_lab = "log(TFP Growth)", c_names = size_names, leg_pos = "topleft", tail_size = 0.05, neg_cut = neg_cut, pov_cut = pov_cut, cut_num = 5000, n_col = 1, left_tail=TRUE)
 
 # cross-sectional plots of LP and LP\_change (country-industry)
-fun_plot_marginal_tail_neg(pdf_name = "Figure_Country_Industry_LP_neg_tail", title = "Left Tail of Log Density of Labor Productivity", cond_ind = 4, var_ind = 5, x_lab = "log(LP)", c_names = ind_name_table$ind_names, leg_pos = "topleft", cut_tail = 0.1, neg_cut = neg_cut, pov_cut = pov_cut, cut_num = 1000, n_col = 3)
+fun_plot_marginal_tail(pdf_name = "Figure_Country_Industry_LP_neg_tail", title = "Left Tail of Log Density of Labor Productivity", cond_ind = 4, var_ind = 5, x_lab = "log(LP)", c_names = ind_name_table$ind_names, leg_pos = "topleft", tail_size = 0.05, neg_cut = neg_cut, pov_cut = pov_cut, cut_num = 1000, n_col = 3, left_tail=TRUE)
 
-fun_plot_marginal_tail_neg(pdf_name = "Figure_Country_Industry_LP_Growth_neg_tail", title = "Left Tail of Log Density of Labor Productivity Growth", cond_ind = 4, var_ind = 6, x_lab = "log(LP Growth)", c_names = ind_name_table$ind_names, leg_pos = "topleft", cut_tail = 0.1, neg_cut = neg_cut, pov_cut = pov_cut, cut_num = 1000, n_col = 3)
+fun_plot_marginal_tail(pdf_name = "Figure_Country_Industry_LP_Growth_neg_tail", title = "Left Tail of Log Density of Labor Productivity Growth", cond_ind = 4, var_ind = 6, x_lab = "log(LP Growth)", c_names = ind_name_table$ind_names, leg_pos = "topleft", tail_size = 0.05, neg_cut = neg_cut, pov_cut = pov_cut, cut_num = 1000, n_col = 3, left_tail=TRUE)
 
-fun_plot_marginal_tail_neg(pdf_name = "Figure_Country_Industry_TFP_Growth_neg_tail", title = "Left Tail of Log Density of TFP Growth", cond_ind = 4, var_ind = 7, x_lab = "log(TFP Growth)", c_names = ind_name_table$ind_names, leg_pos = "topleft", cut_tail = 0.1, neg_cut = neg_cut, pov_cut = pov_cut, cut_num = 1000, n_col = 3)
+fun_plot_marginal_tail(pdf_name = "Figure_Country_Industry_TFP_Growth_neg_tail", title = "Left Tail of Log Density of TFP Growth", cond_ind = 4, var_ind = 7, x_lab = "log(TFP Growth)", c_names = ind_name_table$ind_names, leg_pos = "topleft", tail_size = 0.05, neg_cut = neg_cut, pov_cut = pov_cut, cut_num = 1000, n_col = 3, left_tail=TRUE)
