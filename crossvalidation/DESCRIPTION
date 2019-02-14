@@ -1,0 +1,10 @@
+Package: cross.validation
+Title: Cross validation of fits to distribution functional form (Levy alpha-stable and AEP)
+Version: 0.1
+Description: Package handles cross validation of fits to functional 
+    forms of  Levy alpha-stable and asymmetric exponential power (AEP,
+    Subbotin distributions)
+Depends: R (>= 3.1.0)
+Imports: StableEstim, devtools
+License: MIT Expat License (As is, no warranty)
+LazyData: true
