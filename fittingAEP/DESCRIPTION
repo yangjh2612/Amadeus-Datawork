@@ -1,0 +1,11 @@
+Package: fitting.AEP
+Title: Fitting to asymmetric exponential power (Subbotin) distributions
+Version: 0.1
+Description: Package handles fitting data to asymmetric exponential power 
+    (Subbotin)  distribution functions. Though not yet completely 
+    implemented, it will include goodness of fit measures and 
+    bootstrapping for SD estimation.
+Depends: R (>= 3.1.0)
+Imports: lmomco
+License: MIT Expat License (As is, no warranty)
+LazyData: true
